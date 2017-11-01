@@ -1,0 +1,2 @@
+goimports -w .
+go build .

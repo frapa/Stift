@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Ublop - Dashboard</title>
+
+        <script src="https://unpkg.com/vue/dist/vue.js"></script>
+        <script src="https://unpkg.com/vuetify/dist/vuetify.js"></script>
+
+        <!--<script src="/admin/js/vue.js"></script>-->
+        <script src="/admin/js/model.js"></script>
+        <script src="/admin/js/components.js"></script>
+        <script src="/admin/js/ui.js"></script>
+
+        <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons'
+            rel="stylesheet">
+        <link href="https://unpkg.com/vuetify/dist/vuetify.min.css" rel="stylesheet">
+        <link href="/admin/css/custom.css" media="all" rel="stylesheet" type="text/css" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,
+            user-scalable=no, minimal-ui">
+    </head>
+    <body>
+        <main id="main">
+            <v-app>
+                <v-navigation-drawer app>
+                    <v-toolbar flat>
+                        <v-list>
+                            <v-list-tile>
+                                <v-list-tile-title class="title">
+                                    Ublop
+                                </v-list-tile-title>
+                            </v-list-tile>
+                        </v-list>
+                    </v-toolbar>
+                    <v-divider></v-divider>
+                    <v-list>
+                        <v-list-tile @click="go2NewEditor()">
+                            <v-list-tile-action>
+                                <v-icon>edit</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title>New Story</v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                        <v-list-tile @click="go2Stories()">
+                            <v-list-tile-action>
+                                <v-icon>subject</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title>Stories</v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                        <v-list-tile @click="">
+                            <v-list-tile-action>
+                                <v-icon>supervisor_account</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title>Team</v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                        <v-list-tile @click="">
+                            <v-list-tile-action>
+                                <v-icon>email</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title>Subscribers</v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                        <v-list-tile @click="">
+                            <v-list-tile-action>
+                                <v-icon>label</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title>Tags</v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                    </v-list>
+                    <v-list>
+                        <v-list-tile>
+                            <v-list-tile-title class="title">
+                                Settings
+                            </v-list-tile-title>
+                        </v-list-tile>
+                    </v-list>
+                    <v-divider></v-divider>
+                    <v-list>
+                        <v-list-tile @click="">
+                            <v-list-tile-action>
+                                <v-icon>settings</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title>Blog</v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                        <v-list-tile @click="">
+                            <v-list-tile-action>
+                                <v-icon>style</v-icon>
+                            </v-list-tile-action>
+                            <v-list-tile-content>
+                                <v-list-tile-title>Theme</v-list-tile-title>
+                            </v-list-tile-content>
+                        </v-list-tile>
+                    </v-list>
+                </v-navigation-drawer>
+                <main>
+                    <app-main :status="status" :post="post">
+                    </app-main>
+                </main>
+            </v-app>
+        </main>
+
+        <!-- TEMPLATES -->
+        <template id="main-view">
+            <v-content>
+                <stories-dashboard v-if="showStories"></stories-dashboard>
+                <story-editor v-if="showEditor" :post="post"></story-editor>
+            </v-content>
+        </template>
+
+        <template id="stories-dashboard">
+            <div class="story-list-container">
+                <div class="story-list-content">
+                    <h2>Your Stories</h2>
+
+
+                    <v-container fluid grid-list-lg>
+                        <v-layout row wrap>
+                            <story v-for="post in posts" :key="post.Id" :post="post"></story>
+                        </v-layout>
+                    </v-container>
+                </div>
+            </div>
+        </template>
+
+        <template id="story">
+            <v-flex xs4>
+                <v-card ripple>
+                    <!-- <v-card-media src="/static/doc-images/cards/desert.jpg" height="200px">
+                    </v-card-media> -->
+                    <v-card-title primary-title @click="editPost">
+                        <h5 class="mt-0 mb-0">{{ post.Title }}</h5>
+                    </v-card-title>
+                </v-card>
+            </v-flex>
+        </template>
+
+        <template id="story-editor">
+            <v-container fluid grid-list-xl fill-height>
+                <v-layout row fill-height>
+                    <v-flex d-flex xs12 fill-height justify-center class="pa-0">
+                        <v-flex d-flex xs12 style="flex-direction: column; max-width: 1000px;"
+                            class="pt-2 pb-2">
+                            <v-text-field
+                                class="post-title pt-1 pb-1"
+                                label="Title"
+                                v-model="post.Title"
+                                @input="saveOnInput"
+                                full-width
+                                single-line
+                                autofocus>
+                            </v-text-field>
+                            <v-text-field
+                                class="post-editor pt-1 pb-1"
+                                label="Type something here..."
+                                v-model="post.Plaintext"
+                                @input="saveOnInput"
+                                full-width
+                                multi-line
+                                single-line
+                                textarea
+                                counter>
+                            </v-text-field>
+                            <v-card style="flex-grow: 0; background: transparent;" flat>
+                                <v-btn-toggle class="mr-3">
+                                    <v-btn>
+                                        <v-icon>format_bold</v-icon>
+                                    </v-btn>
+                                    <v-btn>
+                                        <v-icon>format_italic</v-icon>
+                                    </v-btn>
+                                    <v-btn>
+                                        <v-icon>title</v-icon>
+                                    </v-btn>
+                                </v-btn-toggle>
+                                <v-btn-toggle class="mr-3">
+                                    <v-btn>
+                                        <v-icon>format_quote</v-icon>
+                                    </v-btn>
+                                    <v-btn>
+                                        <v-icon>format_list_bulleted</v-icon>
+                                    </v-btn>
+                                    <v-btn>
+                                        <v-icon>format_list_numbered</v-icon>
+                                    </v-btn>
+                                </v-btn-toggle>
+                                <v-btn-toggle class="mr-3">
+                                    <v-btn>
+                                        <v-icon>insert_link</v-icon>
+                                    </v-btn>
+                                    <v-btn>
+                                        <v-icon>insert_photo</v-icon>
+                                    </v-btn>
+                                </v-btn-toggle>
+                            </v-card>
+                        </v-flex>
+                    </v-flex>
+                    <v-flex d-flex fill-height class="pt-2 pb-2">
+                        <v-card flat style="background: transparent;">
+                            <v-card-text>
+                                <v-select
+                                    label="Tags"
+                                    multiple
+                                    chips>
+                                    <!-- v-bind:items="post.Tags" -->
+                                </v-select>
+                                <v-select
+                                    label="Author">
+                                    <!-- v-bind:items="post.Author"> -->
+                                </v-select>
+                                <v-checkbox
+                                    label="Featured post"
+                                    v-model="post.Featured"
+                                    @click.native="saveOnInput">
+                                </v-checkbox>
+                                <v-text-field
+                                    name="input-7-1"
+                                    label="Excerpt"
+                                    v-model="post.Custom_Excerpt"
+                                    @input="saveOnInput"
+                                    auto-grow
+                                    textarea>
+                                </v-text-field>
+                                <v-text-field
+                                    name="input-7-1"
+                                    label="Code Injection"
+                                    v-model="post.Code_Injection"
+                                    @input="saveOnInput"
+                                    auto-grow
+                                    textarea>
+                                </v-text-field>
+                                <p>
+                                    <v-btn color="primary">Publish</v-btn>
+                                    <v-btn color="error">Delete</v-btn>
+                                </p>
+                            </v-card-text>
+                        </v-card>
+                    </v-flex>
+                </v-layout>
+
+                <v-snackbar
+                    :timeout="snackbarTimeout"
+                    bottom right
+                    v-model="saveSnackbar"
+                    class="light-green--text">
+                    Saved <v-icon class="light-green--text">done</v-icon>
+                </v-snackbar>
+            </v-container>
+        </template>
+    </body>
+</html>

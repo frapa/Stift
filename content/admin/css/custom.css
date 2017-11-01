@@ -1,0 +1,38 @@
+.post-title {
+    flex-grow: 0;
+}
+
+.post-title input {
+    height: auto;
+    font-size: 300%;
+}
+
+.post-editor {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.post-editor .input-group__details,
+.post-title .input-group__details {
+    display: none;
+}
+
+.post-editor textarea {
+    resize: none;
+}
+
+#saved-notification {
+    display: none;
+}
+
+.story-list-container {
+    display: flex;
+    justify-content: center;
+}
+
+.story-list-content {
+    max-width: 80em;
+    flex-grow: 1;
+}
