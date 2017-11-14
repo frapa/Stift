@@ -1,0 +1,15 @@
+{{/* extends "layout.html" */}}
+
+{{ define "SubTitle" }} Author: {{ echo .Name }} {{ end }}
+
+{{ define "Content" }}
+
+    <h2>{{ echo .Name }}</h2>
+    <p>
+        {{ echo .Biography }}
+    </p>
+    {{ range .Posts }}
+        {{ echo .Title }}
+    {{ end }}
+
+{{ end }}

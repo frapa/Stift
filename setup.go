@@ -40,8 +40,16 @@ func FinalSetup(res http.ResponseWriter, req *http.Request) {
 	CreateUser(email, password, name)
 	StartSession(res, req, email)
 
+	// Insert default data
 	createSetting("BlogTitle", title)
 	createSetting("BlogSubtitle", subtitle)
+
+	thId := xid.New().String()
+	insertInto("Themes", "id,name", thId, "Impact")
+	createSetting("Theme", thId)
+
+	createSetting("SearchEnabled", "1")
+	createSetting("SubscribersEnabled", "1")
 
 	// Remove setup file so that next time the server starts in production mode
 	os.Remove("setup") // ignore errors

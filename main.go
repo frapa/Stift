@@ -9,6 +9,10 @@ import (
 var systemSignal chan os.Signal
 
 func main() {
+	if _, err := os.Stat("data.sqlite3"); !(os.IsNotExist(err) || justCreated) {
+		initFrontend()
+	}
+
 	// Catch signals to exit and exit gracefully
 	systemSignal = make(chan os.Signal)
 	signal.Notify(systemSignal, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)

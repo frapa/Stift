@@ -1,0 +1,31 @@
+{{/* extends "layout.html" */}}
+
+{{ define "SubTitle" }} post {{ end }}
+
+{{ define "Content" }}
+
+    <article>
+        <header>
+            <a href="{{ echo .Post.Href }}"><h2>{{ echo .Post.Title }}</h2></a>
+            <div>
+                <span>
+                    {{ range .Post.Tags }}
+                        <a href="{{ echo .Href }}">{{ echo .Name }}</a>
+                    {{ end }}
+                </span>
+                <span>
+                    {{ range .Post.Authors }}
+                        <a href="{{ echo .Href }}">{{ echo .Name }}</a>
+                    {{ end }}
+                </span>
+                <span>
+                    {{ format .Post.Published_At "2 Jan 2006 - 15:04" }}
+                </span>
+            </div>
+        </header>
+        <content>
+            {{ plain .Post.Html }}
+        <content>
+    </article>
+
+{{ end }}

@@ -1,0 +1,44 @@
+{{/* extends "layout.html" */}}
+
+{{ define "SubTitle" }} Home {{ end }}
+
+{{ define "Content" }}
+    {{ $page := .Page }}
+
+    {{ range $i, $post := .Posts }}
+        {{ if paginate $i 5 $page }}
+            <article>
+                <header>
+                    <a href="{{ echo .Href }}"><h2>{{ echo .Title }}</h2></a>
+                    <div>
+                        <span>
+                            {{ range .Tags }}
+                                <a href="{{ echo .Href }}">{{ echo .Name }}</a>
+                            {{ end }}
+                        </span>
+                        <span>
+                            {{ range .Authors }}
+                                <a href="{{ echo .Href }}">{{ echo .Name }}</a>
+                            {{ end }}
+                        </span>
+                        <span>
+                            {{ format .Published_At "2 Jan 2006 - 15:04" }}
+                        </span>
+                    </div>
+                </header>
+                <content>
+                    {{ excerpt . }}
+                <content>
+            </article>
+        {{ end }}
+    {{ end }}
+
+    {{ if gt .Page 0 }}
+        <a href="{{ prev_href .Page }}">Newer posts</a>
+    {{ end }}
+
+    {{ if next_exist .Posts 5 .Page }}
+        <a href="{{ next_href .Page }}">Older posts</a>
+    {{ end }}
+
+{{ end }}

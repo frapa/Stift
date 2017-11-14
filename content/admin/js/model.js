@@ -9,7 +9,7 @@ function addHistory(collection, data) {
 }
 
 function ajat(url, json, callback) {
-    httpRequest = new XMLHttpRequest();
+    var httpRequest = new XMLHttpRequest();
 
     httpRequest.onreadystatechange = function () {
         if (httpRequest.readyState === XMLHttpRequest.DONE) {
@@ -60,7 +60,7 @@ function New(table, data) {
     collection.persisted = false;
     collection.fetched = true; // otherwise fetch() overwrites data
 
-    return collection
+    return collection;
 }
 
 function Collection(table) {
@@ -135,6 +135,40 @@ Collection.prototype.each = function (callback) {
     _this.counter = 0;
 };
 
+Collection.prototype.find = function (callback) {
+    var len = this.data.length;
+    for (var i = 0; i < len; i++) {
+        var hasToBreak = callback(this);
+        if (hasToBreak) {
+            var clone = this.clone();
+
+            this.counter = 0;
+            return clone;
+        }
+
+        this.counter += 1;
+    }
+
+    _this.counter = 0;
+    return null;
+};
+
+Collection.prototype.clone = function () {
+    var clone = new Collection(this.table);
+
+    clone.filters = _.plainObj(this.filters);
+    clone.order = _.plainObj(this.order);
+    clone.sqlLimit = this.sqlLimit;
+    clone.sqlOffset = this.sqlOffset;
+    clone.data = _.plainObj(this.data);
+    clone.fetched = this.fetched;
+    clone.counter = this.counter;
+    clone.persisted = this.persisted;
+    clone.new = this.new;
+
+    return clone;
+};
+
 Collection.prototype.fetch = function (callback) {
     var _this = this;
 
@@ -145,14 +179,14 @@ Collection.prototype.fetch = function (callback) {
         return;
     }
 
-    ajaj('/admin/get-elems/', {
+    ajaj('/admin/get-elems', {
         table: this.table,
         filters: this.filters,
         order: this.order,
         limit: this.sqlLimit,
         offset: this.sqlOffset,
     }, function (json) {
-        var plainData = _this.plainObj(json);
+        var plainData = _.plainObj(json);
 
         _this.data = plainData;
         _this.fetched = true;
@@ -164,6 +198,11 @@ Collection.prototype.fetch = function (callback) {
             callback(_this);
         }
     });
+};
+
+Collection.prototype.forceSave = function (callback) {
+    this.persisted = false;
+    this.save(callback);
 };
 
 Collection.prototype.save = function (callback) {
@@ -193,9 +232,24 @@ Collection.prototype.save = function (callback) {
         table: this.table,
         data: this.data,
         new: this.new,
+    };
+
+    ajaj('/admin/set-elems', saveObj, onSaved);
+};
+
+Collection.prototype.delete = function (callback) {
+    if (!this.data[0].Id) {
+        throw "Cannot delete unpersisted object";
     }
 
-    ajaj('/admin/set-elems/', saveObj, onSaved);
+    ajaj('/admin/del-elems', {
+        table: this.table,
+        data: this.data,
+    }, function (json) {
+        if (callback) {
+            callback();
+        }
+    });
 };
 
 Collection.prototype.get = function (key) {
@@ -207,7 +261,7 @@ Collection.prototype.get = function (key) {
 Collection.prototype.set = function (key, value) {
     var elem = this.data[this.counter];
 
-    addHistory(this, this.plainObj(this.data));
+    addHistory(this, _.plainObj(this.data));
 
     var oldValue = elem[key];
     var isNewValue = !(oldValue === value);
@@ -221,55 +275,6 @@ Collection.prototype.set = function (key, value) {
     return this;
 };
 
-// Can also clone objects
-Collection.prototype.plainObj = function (elem) {
-    var _this = this;
-    var obj = null;
-
-    if (elem instanceof Array) {
-        obj = [];
-        elem.forEach(function (singleElem) {
-            obj.push(_this.elemPlainObj(singleElem));
-        });
-    } else {
-        obj = _this.elemPlainObj(elem);
-    }
-
-    return obj;
-}
-
-// Can also clone objects
-Collection.prototype.elemPlainObj = function (elem) {
-    var obj = {};
-
-    for (var key in elem) {
-        if (elem.hasOwnProperty(key)) {
-            var value = elem[key];
-            if (typeof(value) === 'object' && value !== null) {
-                // Go returns an object with 2 keys "Valid"
-                // which says if the value is null and another
-                // whose name depends on the datatype. We
-                // find out the name by exclusion of "Valid"
-                var dataKeys = Object.keys(value);
-                var validPos = dataKeys.indexOf('Valid');
-
-                if (validPos != -1) {
-                    dataKeys.splice(validPos, 1)
-                    var dataKey = dataKeys[0]
-                    obj[key] = value[dataKey];
-                } else {
-                    console.error(dataKeys);
-                    throw "Strange value in data object. See error above.";
-                }
-            } else {
-                obj[key] = value;
-            }
-        }
-    }
-
-    return obj;
-}
-
 Collection.prototype.len = function () {
     return Object.keys(this.data).length;
 }
@@ -277,3 +282,37 @@ Collection.prototype.len = function () {
 Collection.prototype.getData = function () {
     return this.data;
 }
+
+Collection.prototype.setData = function (data) {
+    this.data = data;
+}
+
+Collection.prototype.getModelData = function () {
+    return this.data[this.counter];
+}
+
+Collection.prototype.pluck = function (key) {
+    return _.pluck(this.data, key);
+};
+
+Collection.prototype.add = function (model) {
+    if (!model.get('Id')) {
+        console.error("Cannot add unpersisted element.");
+    }
+
+    this.data.push(model.getModelData());
+    this.persisted = false;
+
+    return this;
+};
+
+Collection.prototype.remove = function (model) {
+    var data = this.find(function (elem) {
+        return elem.get('Id') == model.get('Id');
+    });
+
+    this.data.splice(data.counter, 1);
+    this.persisted = false;
+
+    return this;
+};

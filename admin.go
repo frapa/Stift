@@ -39,8 +39,17 @@ func init() {
 
 	actions["login"] = Login
 	actions["dashboard"] = Dashboard
+	actions["editor"] = Dashboard
+	actions["users"] = Dashboard
+	actions["tags"] = Dashboard
+	actions["subscribers"] = Dashboard
+	actions["blog-settings"] = Dashboard
+	actions["user-settings"] = Dashboard
 	actions["get-elems"] = GetElems
 	actions["set-elems"] = SetElems
+	actions["del-elems"] = DelElems
+	actions["get-authors-and-tags"] = GetAuthorsAndTags
+	actions["upload"] = Upload
 }
 
 func IsAuthenticated(req *http.Request) bool {
@@ -110,6 +119,7 @@ func Admin(res http.ResponseWriter, req *http.Request) {
 
 	if !IsAuthenticated(req) && page != "login" {
 		http.Redirect(res, req, "/admin/login", http.StatusFound)
+		return
 	}
 
 	action := actions[page]
@@ -158,7 +168,10 @@ func Dashboard(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(res, http.StatusText(500), http.StatusInternalServerError)
 	} else {
-		res.Write(content)
+		cookie, _ := req.Cookie("ublop")
+		session := sessions[cookie.Value]
+		content := strings.Replace(string(content), "%email%", session.Email, 1)
+		res.Write([]byte(content))
 	}
 }
 
@@ -183,11 +196,20 @@ type Select struct {
 
 func IsLetter(s string) bool {
 	for _, r := range s {
-		if !unicode.IsLetter(r) && r != '_' {
+		if !unicode.IsLetter(r) && r != '_' && r != '2' {
 			return false
 		}
 	}
 	return true
+}
+
+func IsOperator(s string) bool {
+	switch strings.ToLower(s) {
+	case "=", "!=", "<", "<=", ">", ">=", "like":
+		return true
+	}
+
+	return false
 }
 
 func GetElems(res http.ResponseWriter, req *http.Request) {
@@ -210,7 +232,31 @@ func GetElems(res http.ResponseWriter, req *http.Request) {
 
 	// Create query
 	args := make([]interface{}, 0)
-	query := "SELECT * FROM " + sel.Table
+	query := "SELECT * FROM \"" + sel.Table + "\""
+
+	if len(sel.Filters) > 0 {
+		query += " WHERE "
+
+		filtersSql := make([]string, 0)
+		for _, filter := range sel.Filters {
+			if !IsLetter(filter.Field) {
+				LogError("Field name does contains invalid charachters")
+				http.Error(res, http.StatusText(400), http.StatusBadRequest)
+				return
+			}
+
+			if !IsOperator(filter.Operator) {
+				LogError("Operator is invalid")
+				http.Error(res, http.StatusText(400), http.StatusBadRequest)
+				return
+			}
+
+			filtersSql = append(filtersSql, "\""+filter.Field+"\" "+filter.Operator+" ?")
+			args = append(args, filter.Value)
+		}
+
+		query += strings.Join(filtersSql, " AND ")
+	}
 
 	if sel.Order != (Order{}) {
 		// Check data to avoid SQL injection
@@ -297,6 +343,81 @@ func GetElems(res http.ResponseWriter, req *http.Request) {
 		}
 
 		responseJson, err = json.Marshal(rowsData)
+	case "Tags":
+		rowsData := make([]Tag, 0)
+
+		for rows.Next() {
+			rowData := new(Tag)
+			err := rows.StructScan(&rowData)
+			if err != nil {
+				LogError(err.Error())
+				http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+				return
+			}
+			rowsData = append(rowsData, *rowData)
+		}
+
+		responseJson, err = json.Marshal(rowsData)
+	case "Subscribers":
+		rowsData := make([]Subscriber, 0)
+
+		for rows.Next() {
+			rowData := new(Subscriber)
+			err := rows.StructScan(&rowData)
+			if err != nil {
+				LogError(err.Error())
+				http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+				return
+			}
+			rowsData = append(rowsData, *rowData)
+		}
+
+		responseJson, err = json.Marshal(rowsData)
+	case "Themes":
+		rowsData := make([]Theme, 0)
+
+		for rows.Next() {
+			rowData := new(Theme)
+			err := rows.StructScan(&rowData)
+			if err != nil {
+				LogError(err.Error())
+				http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+				return
+			}
+			rowsData = append(rowsData, *rowData)
+		}
+
+		responseJson, err = json.Marshal(rowsData)
+	case "Post2Users":
+		rowsData := make([]Post2Users, 0)
+
+		for rows.Next() {
+			rowData := new(Post2Users)
+			err := rows.StructScan(&rowData)
+			if err != nil {
+				LogError(err.Error())
+				http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+				return
+			}
+			rowsData = append(rowsData, *rowData)
+		}
+
+		responseJson, err = json.Marshal(rowsData)
+	case "Post2Tags":
+		rowsData := make([]Post2Tags, 0)
+
+		for rows.Next() {
+			rowData := new(Post2Tags)
+			err := rows.StructScan(&rowData)
+			if err != nil {
+				LogError(err.Error())
+				http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+				return
+			}
+			rowsData = append(rowsData, *rowData)
+		}
+
+		responseJson, err = json.Marshal(rowsData)
 	}
 
 	if err != nil {
@@ -355,7 +476,7 @@ func CreateElem(saveReq SaveReq) (string, error) {
 		return "", errors.New("No data provided")
 	}
 
-	sql := "INSERT INTO " + saveReq.Table
+	sql := "INSERT INTO \"" + saveReq.Table + "\""
 
 	fields := make([]string, 1)
 	valuesQuestion := make([]string, 1)
@@ -377,7 +498,7 @@ func CreateElem(saveReq SaveReq) (string, error) {
 			return "", errors.New(msg)
 		}
 
-		fields = append(fields, field)
+		fields = append(fields, "\""+field+"\"")
 		valuesQuestion = append(valuesQuestion, "?")
 		values = append(values, value)
 	}
@@ -404,7 +525,7 @@ func UpdateElems(saveReq SaveReq) error {
 			return errors.New("No Id was found in the data to be saved.")
 		}
 
-		sqlInsert := "UPDATE " + saveReq.Table
+		sqlInsert := "UPDATE \"" + saveReq.Table + "\""
 
 		fields := make([]string, 0)
 		for field, value := range record {
@@ -418,7 +539,7 @@ func UpdateElems(saveReq SaveReq) error {
 				return errors.New(msg)
 			}
 
-			fields = append(fields, field+"=?")
+			fields = append(fields, "\""+field+"\"=?")
 			values = append(values, value)
 		}
 
@@ -433,9 +554,176 @@ func UpdateElems(saveReq SaveReq) error {
 
 	_, err := db.Exec(sql, values...)
 	if err != nil {
+		// Othewise one has to start the server anew
+		db.Exec("ROLLBACK;")
 		LogError(err.Error())
 		return errors.New("SQL Error")
 	}
 
 	return nil
+}
+
+type DeleteReq struct {
+	Table string
+	Data  []map[string]interface{}
+	New   bool
+}
+
+func DelElems(res http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	data := []byte(req.Form.Get("json"))
+
+	var delReq DeleteReq
+	err := json.Unmarshal(data, &delReq)
+	if err != nil {
+		LogError("Invalid JSON")
+		http.Error(res, http.StatusText(400), http.StatusBadRequest)
+		return
+	}
+
+	// Check data to avoid SQL injection
+	if !IsLetter(delReq.Table) {
+		LogError("Table name does contains invalid charachters")
+		http.Error(res, http.StatusText(400), http.StatusBadRequest)
+		return
+	}
+
+	sql := ""
+
+	values := make([]interface{}, 0)
+	for _, record := range delReq.Data {
+		if _, ok := record["Id"]; !ok {
+			LogError("No Id was found in the data to be deleted.")
+			http.Error(res, http.StatusText(400), http.StatusBadRequest)
+		}
+
+		sql += "DELETE FROM \"" + delReq.Table + "\" WHERE Id=?;"
+		values = append(values, record["Id"])
+	}
+
+	sql = "BEGIN TRANSACTION;" + sql + "END TRANSACTION;"
+
+	_, err = db.Exec(sql, values...)
+	if err != nil {
+		// Othewise one has to start the server anew
+		db.Exec("ROLLBACK;")
+		LogError(err.Error())
+		http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+	}
+
+	res.Write([]byte("{}"))
+}
+
+type AuthorsAndTagsReq struct {
+	Post string
+}
+
+type UserLink struct {
+	User
+	LinkId string
+}
+
+type TagLink struct {
+	Tag
+	LinkId string
+}
+
+type AuthorsAndTags struct {
+	Authors []UserLink
+	Tags    []TagLink
+}
+
+func getAuthors(postId string) ([]UserLink, error) {
+	authorsSql := `
+		SELECT Post2Users.Id AS linkid, Users.* FROM Post2Users
+		JOIN Users ON Post2Users.User=Users.Id
+		WHERE Post2Users.Post=? ORDER BY Users.Name ASC;`
+
+	// Execute query
+	rows, err := db.Queryx(authorsSql, postId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	authors := make([]UserLink, 0)
+
+	for rows.Next() {
+		rowData := new(UserLink)
+		err := rows.StructScan(&rowData)
+		if err != nil {
+			return nil, err
+		}
+		// Do now allow password to go over the network
+		rowData.Password.String = ""
+		rowData.Salt.String = ""
+		authors = append(authors, *rowData)
+	}
+
+	return authors, nil
+}
+
+func getTags(postId string) ([]TagLink, error) {
+	tagsSql := `
+		SELECT Post2Tags.Id AS linkid, Tags.* FROM Post2Tags
+		JOIN Tags ON Post2Tags.Tag=Tags.Id
+		WHERE Post2Tags.Post=? ORDER BY Tags.Name ASC;`
+
+	// Execute query
+	rows, err := db.Queryx(tagsSql, postId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := make([]TagLink, 0)
+
+	for rows.Next() {
+		rowData := new(TagLink)
+		err := rows.StructScan(&rowData)
+		if err != nil {
+			return nil, err
+		}
+		tags = append(tags, *rowData)
+	}
+
+	return tags, nil
+}
+
+func GetAuthorsAndTags(res http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	reqDataStr := []byte(req.Form.Get("json"))
+
+	var reqData AuthorsAndTagsReq
+	err := json.Unmarshal(reqDataStr, &reqData)
+	if err != nil {
+		LogError("Invalid JSON")
+		http.Error(res, http.StatusText(400), http.StatusBadRequest)
+		return
+	}
+	postId := reqData.Post
+
+	data := new(AuthorsAndTags)
+	data.Authors, err = getAuthors(postId)
+	if err != nil {
+		LogError(err.Error())
+		http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+		return
+	}
+	data.Tags, err = getTags(postId)
+	if err != nil {
+		LogError(err.Error())
+		http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+		return
+	}
+
+	responseJson, err := json.Marshal(data)
+
+	if err != nil {
+		LogError(err.Error())
+		http.Error(res, http.StatusText(500), http.StatusInternalServerError)
+		return
+	}
+
+	res.Write(responseJson)
 }

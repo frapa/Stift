@@ -8,12 +8,14 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/xid"
 )
 
 const (
 	dbVersion = "0.1.0"
 )
 
+var justCreated bool
 var db *sqlx.DB
 
 func init() {
@@ -22,6 +24,8 @@ func init() {
 	if _, err = os.Stat("data.sqlite3"); os.IsNotExist(err) {
 		// This means the database was not created yet.
 		CreateEmptySchema()
+		createSetting("DbVersion", dbVersion)
+		justCreated = true
 	}
 
 	db, err = sqlx.Open("sqlite3", "data.sqlite3")
@@ -36,34 +40,35 @@ func init() {
 		return
 	}
 
-	print(version)
+	println(version)
 	if version == dbVersion {
 
 	}
 }
 
 type User struct {
-	Id        sql.NullString
-	Email     sql.NullString
-	Name      sql.NullString
-	Slug      sql.NullString
-	Location  sql.NullString
-	Biography sql.NullString
-	Password  sql.NullString
-	Salt      sql.NullString
-	Tags      sql.NullString
+	Id              sql.NullString
+	Email           sql.NullString
+	Name            sql.NullString
+	Slug            sql.NullString
+	Location        sql.NullString
+	Biography       sql.NullString
+	Profile_Picture sql.NullString
+	Password        sql.NullString
+	Salt            sql.NullString
+	Tags            sql.NullString
+	Dark_Theme      sql.NullInt64
 }
 
 type Post struct {
 	Id             sql.NullString
 	Title          sql.NullString
 	Plaintext      sql.NullString
+	Slug           sql.NullString
 	Html           sql.NullString
 	Featured_Image sql.NullString
-	Visibility     sql.NullString
-	Tags           sql.NullString
-	Author         sql.NullInt64
-	Type           sql.NullString
+	Visible        sql.NullInt64
+	Page           sql.NullInt64
 	Featured       sql.NullInt64
 	Created_At     *time.Time
 	Updated_At     *time.Time
@@ -73,8 +78,39 @@ type Post struct {
 }
 
 type Settings struct {
+	Id    sql.NullString
 	Key   sql.NullString
 	Value sql.NullString
+}
+
+type Tag struct {
+	Id          sql.NullString
+	Name        sql.NullString
+	Image       sql.NullString
+	Slug        sql.NullString
+	Description sql.NullString
+}
+
+type Subscriber struct {
+	Id    sql.NullString
+	Email sql.NullString
+}
+
+type Theme struct {
+	Id   sql.NullString
+	Name sql.NullString
+}
+
+type Post2Users struct {
+	Id   sql.NullString
+	Post sql.NullString
+	User sql.NullString
+}
+
+type Post2Tags struct {
+	Id   sql.NullString
+	Post sql.NullString
+	Tag  sql.NullString
 }
 
 func CreateEmptySchema() {
@@ -90,23 +126,24 @@ func CreateEmptySchema() {
 		id text PRIMARY KEY,
         email text,
 		name text,
-		slug text,
+		slug text UNIQUE,
 		location text,
 		biography text,
+		profile_picture text,
         password text,
         salt text,
-        tags text
+        tags text,
+		dark_theme integer
     );`)
 	db.Exec(`CREATE TABLE Posts (
         id text PRIMARY KEY,
         title text,
         plaintext text,
         html text,
+		slug text UNIQUE,
         featured_image text,
-        visibility text,
-        tags text,
-        author integer,
-        type text,
+        visible integer,
+        page integer,
         featured integer,
         created_at datetime,
         updated_at datetime,
@@ -115,9 +152,38 @@ func CreateEmptySchema() {
         custom_excerpt text
     );`)
 	db.Exec(`CREATE TABLE Settings (
-        key text PRIMARY KEY,
+        id text PRIMARY KEY,
+        key text,
 		value text
     );`)
+	db.Exec(`CREATE TABLE Tags (
+        id text PRIMARY KEY,
+        name text,
+		slug text UNIQUE,
+		image text,
+		description text
+    );`)
+	db.Exec(`CREATE TABLE Subscribers (
+        id text PRIMARY KEY,
+        email text
+    );`)
+	db.Exec(`CREATE TABLE Themes (
+        id text PRIMARY KEY,
+		name text
+    );`)
+
+	// Relations
+	db.Exec(`CREATE TABLE Post2Tags (
+        id text PRIMARY KEY,
+        post text,
+		tag text
+    );`)
+	db.Exec(`CREATE TABLE Post2Users (
+        id text PRIMARY KEY,
+        post text,
+		user text
+    );`)
+
 	db.Exec("END TRANSACTION;")
 }
 
@@ -133,13 +199,17 @@ func getColumnsWhere(tab string, cols string, where string, args ...interface{})
 	}
 	defer rows.Close()
 
-	// Assume there is only one match
-	rows.Next()
-
 	colNum := len(strings.Split(cols, ","))
 	values := make([]string, colNum)
-	for i := 0; i < colNum; i++ {
-		if err := rows.Scan(&values[i]); err != nil {
+
+	// Assume there is only one match
+	if rows.Next() {
+		ints := make([]interface{}, colNum)
+		for i := range values {
+			ints[i] = &values[i]
+		}
+
+		if err := rows.Scan(ints...); err != nil {
 			return nil, err
 		}
 	}
@@ -170,7 +240,7 @@ func getSetting(setting string) (string, error) {
 }
 
 func createSetting(setting string, value string) error {
-	err := insertInto("Settings", "key, value", setting, value)
+	err := insertInto("Settings", "id, key, value", xid.New().String(), setting, value)
 	if err != nil {
 		return err
 	}
