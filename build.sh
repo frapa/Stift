@@ -1,2 +1,3 @@
 goimports -w .
-go build .
+go build -v .
+./ublop

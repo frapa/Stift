@@ -1,26 +1,9 @@
 var settings = null;
 
-var _ = {
-    pluck: function (array, key) {
-        var data = [];
+// Fuck people
+_.pluck = _.map;
 
-        array.forEach(function (elem) {
-            data.push(elem[key]);
-        });
-
-        return data;
-    },
-    find: function (array, callback) {
-        var len = array.length;
-        for (var i = 0; i < len; i++) {
-            var hasToBreak = callback(array[i]);
-            if (hasToBreak) {
-                return array[i];
-            }
-        }
-
-        return null;
-    },
+var __ = {
     // Can also clone objects
     plainObj: function (elem) {
         var obj = null;
@@ -28,10 +11,10 @@ var _ = {
         if (elem instanceof Array) {
             obj = [];
             elem.forEach(function (singleElem) {
-                obj.push(_.elemPlainObj(singleElem));
+                obj.push(__.elemPlainObj(singleElem));
             });
         } else {
-            obj = _.elemPlainObj(elem);
+            obj = __.elemPlainObj(elem);
         }
 
         return obj;
@@ -67,37 +50,9 @@ var _ = {
 
         return obj;
     },
-    waitAsync: function (count, callback) {
-        if (count == 0) {
-            callback();
-        }
-
-        return new function () {
-            var _this = this;
-            this.count = count;
-            this.wait = function () { _this.count += 1; };
-            this.done = function () {
-                _this.count -= 1;
-                if (_this.count === 0) {
-                    callback();
-                }
-            };
-        };
-    }
 }
 
-window.addEventListener('load', function () {
-    settings = All('Settings');
-
-    // Without this line, other load callbacks do not work...
-    setTimeout(function () {
-        settings.fetch();
-
-        user.fetch(function () {
-            setTheme(user.get('Dark_Theme') ? 'dark' : 'light')
-        });
-    }, 0);
-
+window.addEventListener('load', async function () {
     // setup markdown compiler
     marked.setOptions({
         renderer: new marked.Renderer(),
@@ -112,6 +67,12 @@ window.addEventListener('load', function () {
             return hljs.highlightAuto(code).value;
         }
     });
+
+    settings = await All('Settings').fetch();
+    await user.fetch();
+
+    initUi();
+    setTheme(user.get('Dark_Theme') ? 'dark' : 'light');
 });
 
 function getSetting(key) {
@@ -131,4 +92,19 @@ function setTheme(theme) {
     var newClasses = document.querySelector('.application').className;
     newClasses = newClasses.replace(/theme--\w*/, 'theme--' + theme);
     document.querySelector('.application').className = newClasses;
+}
+
+async function sendEmail(options) {
+    var res = await fetch('/admin/email', {
+        credentials: 'same-origin',
+        method: 'POST',
+        body: JSON.stringify(options)
+    });
+
+    var text = await res.text();
+    if (text === "'mail' is not installed") {
+        console.error(text);
+    } else if (text !== 'Ok') {
+        console.error(text);
+    }
 }

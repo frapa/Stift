@@ -94,11 +94,21 @@ type Tag struct {
 type Subscriber struct {
 	Id    sql.NullString
 	Email sql.NullString
+	Date  *time.Time
 }
 
 type Theme struct {
 	Id   sql.NullString
 	Name sql.NullString
+}
+
+type Media struct {
+	Id          sql.NullString
+	Path        sql.NullString
+	Size        sql.NullInt64
+	Width       sql.NullInt64
+	Height      sql.NullInt64
+	Uploaded_At *time.Time
 }
 
 type Post2Users struct {
@@ -165,11 +175,29 @@ func CreateEmptySchema() {
     );`)
 	db.Exec(`CREATE TABLE Subscribers (
         id text PRIMARY KEY,
-        email text
+        email text,
+		date datetime
     );`)
 	db.Exec(`CREATE TABLE Themes (
         id text PRIMARY KEY,
 		name text
+    );`)
+	db.Exec(`CREATE TABLE Media (
+        id text PRIMARY KEY,
+		path text,
+		size integer,
+		width integer,
+		height integer,
+		uploaded_at datetime
+    );`)
+	db.Exec(`CREATE TABLE Outgoing_Emails (
+        id text PRIMARY KEY,
+		from_address text,
+		to_address text,
+		subject text,
+		content text,
+		reason text,
+		date datetime
     );`)
 
 	// Relations
@@ -228,6 +256,21 @@ func insertInto(tab string, cols string, values ...interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// Unsafe function, use only with validated data
+func updateWhere(tab string, cols string, where string, values ...interface{}) error {
+	splitCols := strings.Split(cols, ",")
+	sqlCols := strings.Join(splitCols, "=?, ") + "=?"
+	sql := "UPDATE " + tab + " SET " + sqlCols + " WHERE " + where + ";"
+
+	_, err := db.Exec(sql, values...)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

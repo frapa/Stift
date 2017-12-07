@@ -9,19 +9,17 @@
         <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons|Roboto+Mono'
         rel="stylesheet">
 
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,
+            user-scalable=no, minimal-ui">
+
         <script src="/admin/js/libs/vue.min.js"></script>
         <script src="/admin/js/libs/vue-router.min.js"></script>
         <script src="/admin/js/libs/vuetify.min.js"></script>
         <script src="/admin/js/libs/marked.min.js"></script>
         <script src="/admin/js/libs/highlight.min.js"></script>
+        <script src="/admin/js/libs/lodash.min.js"></script>
 
-        <script src="/admin/js/model.js"></script>
-        <script src="/admin/js/components.js"></script>
-        <script src="/admin/js/ui.js"></script>
-        <script src="/admin/js/utils.js"></script>
-
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,
-            user-scalable=no, minimal-ui">
+        <script src="/admin/js/concat.js"></script>
 
         <script>
             var user = All("Users").filter("email", "=", "%email%");
@@ -30,18 +28,16 @@
     <body>
         <v-app id="main" style="height: 100%;">
             <v-navigation-drawer app fixed>
-                <v-toolbar flat>
-                    <v-list>
-                        <v-list-tile>
-                            <v-list-tile-title class="title">
-                                ExPress
-                            </v-list-tile-title>
-                        </v-list-tile>
-                    </v-list>
-                </v-toolbar>
+                <v-list>
+                    <v-list-tile>
+                        <v-list-tile-title class="title">
+                            ExPress
+                        </v-list-tile-title>
+                    </v-list-tile>
+                </v-list>
                 <v-divider></v-divider>
                 <v-list>
-                    <v-list-tile @click="go2NewEditor()">
+                    <v-list-tile to="/admin/editor">
                         <v-list-tile-action>
                             <v-icon>edit</v-icon>
                         </v-list-tile-action>
@@ -49,7 +45,7 @@
                             <v-list-tile-title>New Story</v-list-tile-title>
                         </v-list-tile-content>
                     </v-list-tile>
-                    <v-list-tile @click="go2Stories()">
+                    <v-list-tile to="/admin/dashboard">
                         <v-list-tile-action>
                             <v-icon>subject</v-icon>
                         </v-list-tile-action>
@@ -57,7 +53,7 @@
                             <v-list-tile-title>Stories</v-list-tile-title>
                         </v-list-tile-content>
                     </v-list-tile>
-                    <v-list-tile @click="go2Team">
+                    <v-list-tile to="/admin/team">
                         <v-list-tile-action>
                             <v-icon>supervisor_account</v-icon>
                         </v-list-tile-action>
@@ -65,7 +61,7 @@
                             <v-list-tile-title>Team</v-list-tile-title>
                         </v-list-tile-content>
                     </v-list-tile>
-                    <v-list-tile @click="go2Tags">
+                    <v-list-tile to="/admin/tags">
                         <v-list-tile-action>
                             <v-icon>label</v-icon>
                         </v-list-tile-action>
@@ -73,12 +69,20 @@
                             <v-list-tile-title>Tags</v-list-tile-title>
                         </v-list-tile-content>
                     </v-list-tile>
-                    <v-list-tile @click="go2Subscribers">
+                    <v-list-tile to="/admin/subscribers">
                         <v-list-tile-action>
                             <v-icon>email</v-icon>
                         </v-list-tile-action>
                         <v-list-tile-content>
                             <v-list-tile-title>Subscribers</v-list-tile-title>
+                        </v-list-tile-content>
+                    </v-list-tile>
+                    <v-list-tile to="/admin/media">
+                        <v-list-tile-action>
+                            <v-icon>folder</v-icon>
+                        </v-list-tile-action>
+                        <v-list-tile-content>
+                            <v-list-tile-title>Files</v-list-tile-title>
                         </v-list-tile-content>
                     </v-list-tile>
                 </v-list>
@@ -91,7 +95,7 @@
                 </v-list>
                 <v-divider></v-divider>
                 <v-list>
-                    <v-list-tile @click="go2Settings('blog')">
+                    <v-list-tile to="/admin/blog-settings">
                         <v-list-tile-action>
                             <v-icon>settings</v-icon>
                         </v-list-tile-action>
@@ -99,7 +103,7 @@
                             <v-list-tile-title>Blog</v-list-tile-title>
                         </v-list-tile-content>
                     </v-list-tile>
-                    <v-list-tile @click="go2Settings('user')">
+                    <v-list-tile to="/admin/user-settings">
                         <v-list-tile-action>
                             <v-icon>account_circle</v-icon>
                         </v-list-tile-action>
@@ -107,40 +111,16 @@
                             <v-list-tile-title>User</v-list-tile-title>
                         </v-list-tile-content>
                     </v-list-tile>
-                    <!-- <v-list-tile @click="">
-                        <v-list-tile-action>
-                            <v-icon>style</v-icon>
-                        </v-list-tile-action>
-                        <v-list-tile-content>
-                            <v-list-tile-title>Theme</v-list-tile-title>
-                        </v-list-tile-content>
-                    </v-list-tile> -->
                 </v-list>
             </v-navigation-drawer>
-            <v-content style="height: 100%; overflow-y: scroll;">
-                <app-main style="height: 100%;" :status="status"
-                    :all-users="allUsers" :all-tags="allTags"
-                    :post="post" :post-tags="postTags" :post-authors="postAuthors">
-                </app-main>
+            <v-content>
+                <transition name="fade">
+                    <router-view></router-view>
+                </transition>
             </v-content>
         </v-app>
 
         <!-- TEMPLATES -->
-        <template id="main-view">
-            <div>
-                <stories-dashboard v-if="showStories"></stories-dashboard>
-                <story-editor v-if="showEditor"
-                    :all-users="allUsers" :all-tags="allTags"
-                    :post="post" :tags="postTags" :authors="postAuthors">
-                </story-editor>
-                <team v-if="showTeam"></team>
-                <tags v-if="showTags"></tags>
-                <subscribers v-if="showSubscribers"></subscribers>
-                <settings-blog v-if="showSettingsBlog"></settings-blog>
-                <settings-user v-if="showSettingsUser"></settings-user>
-                <loading v-if="showLoading"></loading>
-            </div>
-        </template>
 
         <template id="loading">
             <v-container fluid grid-list-lg fill-height>
@@ -153,15 +133,38 @@
         </template>
 
         <template id="stories-dashboard">
-            <v-container fluid grid-list-xl fill-height>
-                <v-layout row justify-center wrap fill-height>
+            <v-container fluid grid-list-xl>
+                <v-layout row justify-center wrap>
                     <v-flex xs12>
-                        <h1>Your Stories</h1>
+                        <v-toolbar app fixed>
+                            <v-toolbar-title>Stories ({{posts.length}})</v-toolbar-title>
+                            <v-spacer></v-spacer>
+                            <v-btn-toggle v-model=filter class="mr-3">
+                                <v-btn value="all">
+                                    <v-icon>subject</v-icon>
+                                </v-btn>
+                                <v-btn value="drafts">
+                                    <v-icon>edit</v-icon>
+                                </v-btn>
+                                <v-btn value="public">
+                                    <v-icon>public</v-icon>
+                                </v-btn>
+                                <v-btn value="featured">
+                                    <v-icon>star</v-icon>
+                                </v-btn>
+                                <v-btn value="pages">
+                                    <v-icon>web</v-icon>
+                                </v-btn>
+                            </v-btn-toggle>
+                        </v-toolbar>
                     </v-flex>
-                    <v-flex xs12 fill-height>
+                    <v-flex xs12>
                         <v-container fluid grid-list-lg>
                             <v-layout row wrap>
-                                <story v-for="post in posts" :key="post.Id" :post="post"></story>
+                                <story v-for="post in posts"
+                                    v-if="isVisible(post)"
+                                    :key="post.Id"
+                                    :post="post"></story>
                             </v-layout>
                         </v-container>
                     </v-flex>
@@ -171,12 +174,28 @@
 
         <template id="story">
             <v-flex xs4>
-                <v-card ripple>
-                    <!-- <v-card-media src="/static/doc-images/cards/desert.jpg" height="200px">
-                    </v-card-media> -->
-                    <v-card-title primary-title @click="editPost">
+                <v-card ripple @click.native="editPost">
+                    <v-card-media
+                        :src="featuredImageUrl"
+                        height="160px">
+                    </v-card-media>
+                    <v-card-title primary-title class="pa-2">
                         <h4 class="mt-0 mb-0">{{ post.Title }}</h4>
                     </v-card-title>
+                    <v-card-actions>
+                        <v-chip label small color="green darken-1" v-if="post.Visible">
+                            Published
+                        </v-chip>
+                        <v-chip label small color="red" v-if="!post.Visible">
+                            Draft
+                        </v-chip>
+                        <v-chip label small color="amber darken-1" v-if="post.Featured">
+                            Featured
+                        </v-chip>
+                        <v-chip label small color="blue-grey" v-if="post.Page">
+                            Page
+                        </v-chip>
+                    </v-card-actions>
                 </v-card>
             </v-flex>
         </template>
@@ -187,7 +206,7 @@
                     <v-flex d-flex xs6>
                         <v-layout row wrap>
                             <v-flex d-flex xs12>
-                                <h6>General</h6>
+                                <h3>General</h3>
                             </v-flex>
                             <v-flex d-flex xs12>
                                 <v-card>
@@ -200,57 +219,111 @@
                                             v-model="BlogSubtitle"
                                             label="Blog subtitle">
                                         </v-text-field>
+                                        <v-text-field
+                                            v-model="BlogUrl"
+                                            label="Blog url">
+                                        </v-text-field>
+                                        <v-text-field
+                                            v-model="OutgoingEmailAddress"
+                                            :hint="emailHint"
+                                            label="Blog e-mail address">
+                                        </v-text-field>
+                                        <p>
+                                            This e-mail address will be used as sender address for
+                                            different operations, such as inviting new members or
+                                            the newsletter. E-mails sent to this address will not
+                                            be received by anybody, therefore it is usually a good
+                                            idea to include 'noreply' in the address.
+                                        </p>
                                     </v-card-text>
                                 </v-card>
                             </v-flex>
                             <v-flex d-flex xs12>
-                                <h6>Theme</h6>
+                                <h3>Image Quality</h3>
+                            </v-flex>
+                            <v-flex d-flex xs12>
+                                <v-card>
+                                    <v-card-text>
+                                        <v-text-field
+                                            v-model="MaxResolution"
+                                            label="Max resolution (horizontal or vertical)">
+                                        </v-text-field>
+                                        <v-text-field
+                                            v-model="JpegQuality"
+                                            label="Jpeg quality">
+                                        </v-text-field>
+                                        <p>
+                                            Uploaded images are automatically scaled to fit inside
+                                            the maximum resolution and compressed to the default
+                                            jpeg quality (if they are jpeg). This improves the user
+                                            experience by making the pages faster to load.
+                                        </p>
+                                    </v-card-text>
+                                </v-card>
+                            </v-flex>
+                            <v-flex d-flex xs12>
+                                <h3>Theme</h3>
                             </v-flex>
                             <v-flex d-flex xs12>
                                 <v-card>
                                     <v-card-text>
                                         <v-list two-line>
-                                          <template v-for="theme in themes">
-                                            <v-list-tile avatar>
-                                              <v-list-tile-avatar>
-                                                <img :src="theme.image">
-                                              </v-list-tile-avatar>
-                                              <v-list-tile-content>
-                                                <v-list-tile-title v-html="theme.Name"></v-list-tile-title>
-                                                <v-list-tile-sub-title class="light-green--text" v-html="theme.enabled"></v-list-tile-sub-title>
-                                              </v-list-tile-content>
-                                              <!--  -->
-                                                <v-list-tile-action
-                                                    v-if="theme.enabled != 'Enabled'">
-                                                    <v-tooltip bottom>
-                                                        <v-btn icon ripple slot="activator">
-                                                            <v-icon color="grey lighten-1">visibility</v-icon>
-                                                        </v-btn>
-                                                        <span>Activate</span>
-                                                    </v-tooltip>
-                                                </v-list-tile-action>
-                                              <!--  -->
-                                              <v-list-tile-action v-if="theme.enabled != 'Enabled'">
-                                                    <v-tooltip bottom>
-                                                        <v-btn icon ripple slot="activator">
-                                                            <v-icon color="grey lighten-1">delete</v-icon>
-                                                        </v-btn>
-                                                        <span>Delete</span>
-                                                    </v-tooltip>
-                                              </v-list-tile-action>
-                                            </v-list-tile>
-                                            <v-divider></v-divider>
-                                          </template>
+                                            <template v-for="theme in themes">
+                                                <v-list-tile avatar>
+                                                    <v-list-tile-avatar>
+                                                        <img :src="theme.image">
+                                                    </v-list-tile-avatar>
+                                                    <v-list-tile-content>
+                                                        <v-list-tile-title
+                                                            v-html="theme.Name">
+                                                        </v-list-tile-title>
+                                                        <v-list-tile-sub-title
+                                                            class="light-green--text"
+                                                            v-html="theme.Id == Theme ? 'Enabled' : ''">
+                                                        </v-list-tile-sub-title>
+                                                    </v-list-tile-content>
+                                                    <!--  -->
+                                                    <v-list-tile-action
+                                                        v-if="theme.Id != Theme">
+                                                        <v-tooltip bottom>
+                                                            <v-btn
+                                                                icon ripple
+                                                                slot="activator"
+                                                                @click="activateTheme(theme.Id)">
+                                                                <v-icon color="grey lighten-1">
+                                                                    visibility
+                                                                </v-icon>
+                                                            </v-btn>
+                                                            <span>Activate</span>
+                                                        </v-tooltip>
+                                                    </v-list-tile-action>
+                                                    <!--  -->
+                                                    <!--<v-list-tile-action v-if="theme.enabled != 'Enabled'">
+                                                        <v-tooltip bottom>
+                                                            <v-btn icon ripple slot="activator">
+                                                                <v-icon color="grey lighten-1">delete</v-icon>
+                                                            </v-btn>
+                                                            <span>Delete</span>
+                                                        </v-tooltip>
+                                                    </v-list-tile-action>-->
+                                                </v-list-tile>
+                                                <v-divider></v-divider>
+                                            </template>
                                         </v-list>
-                                        <!--  -->
-                                        <div style="text-align: right;">
-                                            <v-btn color="primary" elevation-4 @click="save">Upload new</v-btn>
-                                        </div>
                                     </v-card-text>
+                                    <!--<v-card-actions>
+                                        <v-spacer></v-spacer>
+                                        <v-btn
+                                            color="primary"
+                                            elevation-4
+                                            @click="save">
+                                            Upload new
+                                        </v-btn>
+                                    </v-card-actions>-->
                                 </v-card>
                             </v-flex>
                             <v-flex d-flex xs12>
-                                <h6>Search</h6>
+                                <h3>Search</h3>
                             </v-flex>
                             <v-flex d-flex xs12>
                                 <v-card>
@@ -262,13 +335,13 @@
                                         </v-checkbox>
                                         <p>
                                             Your theme has to support search for
-                                            this function to work properly
+                                            this function to work properly.
                                         </p>
                                     </v-card-text>
                                 </v-card>
                             </v-flex>
-                            <v-flex d-flex xs12>
-                                <h6>Subscribers</h6>
+                            <!--<v-flex d-flex xs12>
+                                <h3>Subscribers</h3>
                             </v-flex>
                             <v-flex d-flex xs12>
                                 <v-card>
@@ -296,14 +369,15 @@
                                             auto-grow
                                             textarea>
                                         </v-text-field>
-                                        <h6 class="subheading">Preview</h6>
+                                        <h3 class="subheading">Preview</h3>
                                     </v-card-text>
                                 </v-card>
-                            </v-flex>
+                            </v-flex>-->
                             <v-flex d-flex xs12>
-                                <div style="text-align: right;">
+                                <v-layout>
+                                    <v-spacer></v-spacer>
                                     <v-btn color="primary" elevation-4 @click="save">Save</v-btn>
-                                </div>
+                                </v-layout>
 
                                 <v-snackbar
                                     :timeout="snackbarTimeout"
@@ -325,7 +399,7 @@
                     <v-flex d-flex xs6>
                         <v-layout row wrap>
                             <v-flex d-flex xs12>
-                                <h6>Author</h6>
+                                <h3>Author</h3>
                             </v-flex>
                             <v-flex d-flex xs12>
                                 <v-card>
@@ -352,7 +426,7 @@
                                 </v-card>
                             </v-flex>
                             <v-flex d-flex xs12>
-                                <h6>Account</h6>
+                                <h3>Account</h3>
                             </v-flex>
                             <v-flex d-flex xs12>
                                 <v-card>
@@ -361,11 +435,56 @@
                                             v-model="user.Email"
                                             label="E-mail">
                                         </v-text-field>
+
+                                        <v-layout>
+                                            <v-spacer></v-spacer>
+                                            <v-btn
+                                                @click="changePassword = !changePassword">
+                                                Change Password
+                                            </v-btn>
+                                        </v-layout>
+
+                                        <v-dialog max-width="500px" v-model="changePassword"
+                                            transition="false" persistent>
+                                            <v-card>
+                                                <v-card-title>
+                                                    Change Password
+                                                </v-card-title>
+                                                <v-card-text>
+                                                    <v-text-field
+                                                        v-model="password"
+                                                        :hint="hint"
+                                                        type="password"
+                                                        min="8"
+                                                        :error="error"
+                                                        :counter="8"
+                                                        persistent-hint
+                                                        label="New password">
+                                                    </v-text-field>
+                                                    <v-text-field
+                                                        v-model="repeatPassword"
+                                                        type="password"
+                                                        min="8"
+                                                        :counter="8"
+                                                        label="Repeat new password">
+                                                    </v-text-field>
+                                                </v-card-text>
+                                                <v-card-actions>
+                                                    <v-spacer></v-spacer>
+                                                    <v-btn flat @click="changePassword = !changePassword">
+                                                        Cancel
+                                                    </v-btn>
+                                                    <v-btn flat @click="setPassword">
+                                                        Confirm
+                                                    </v-btn>
+                                                </v-card-actions>
+                                            </v-card>
+                                        </v-dialog>
                                     </v-card-text>
                                 </v-card>
                             </v-flex>
                             <v-flex d-flex xs12>
-                                <h6>User Interface</h6>
+                                <h3>User Interface</h3>
                             </v-flex>
                             <v-flex d-flex xs12>
                                 <v-card>
@@ -380,7 +499,10 @@
                                 </v-card>
                             </v-flex>
                             <v-flex d-flex xs12>
-                                <v-btn color="primary" elevation-4 @click="save">Save</v-btn>
+                                <v-layout>
+                                    <v-spacer></v-spacer>
+                                    <v-btn color="primary" elevation-4 @click="save">Save</v-btn>
+                                </v-layout>
 
                                 <v-snackbar
                                     :timeout="snackbarTimeout"
@@ -398,31 +520,164 @@
 
         <template id="team">
             <v-container fluid grid-list-xl>
+                <v-toolbar app fixed>
+                    <v-toolbar-title>Team members ({{users.length}})</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-text-field
+                        label="Search"
+                        v-model="search"
+                        prepend-icon="search"
+                        hide-details
+                        single-line
+                        autofocus>
+                    </v-text-field>
+                    <v-tooltip bottom>
+                        <v-btn @click.native="addTag" slot="activator" icon>
+                            <v-icon>add_circle</v-icon>
+                        </v-btn>
+                        <span>New Member</span>
+                    </v-tooltip>
+                    <v-tooltip bottom v-if="selected.length">
+                        <v-btn @click.native="deleteTags" slot="activator" icon>
+                            <v-icon>delete</v-icon>
+                        </v-btn>
+                        <span>Delete Members</span>
+                    </v-tooltip>
+                    <v-tooltip bottom v-if="selected.length">
+                        <v-btn @click.native="sendInvitationEmail" slot="activator" icon>
+                            <v-icon>email</v-icon>
+                        </v-btn>
+                        <span>Send Invitation</span>
+                    </v-tooltip>
+                </v-toolbar>
+
                 <v-layout row justify-center>
                     <v-flex d-flex xs12>
                         <v-data-table
                             :headers="header"
                             :items="users"
+                            item-key="Id"
                             v-model="selected"
                             hide-actions
                             select-all
+                            :search="search"
                             class="elevation-1">
                             <template slot="items" slot-scope="props">
-                                <tr :active="props.selected">
+                                <tr>
                                     <td width="10px">
                                         <v-checkbox
                                             primary
                                             hide-details
-                                            :input-value="props.selected"
-                                            @click="props.selected = !props.selected">
+                                            v-model="props.selected">
                                         </v-checkbox>
                                     </td>
-                                    <td>{{ props.item.Name }}</td>
-                                    <td>{{ props.item.Email }}</td>
-                                    <td>{{ props.item.Tags }}</td>
+                                    <td>
+                                        <v-edit-dialog lazy large
+                                            @open="tmp = props.item.Name"
+                                            @save="saveUser(props.item, 'Name')">
+                                            <div :id="props.item.Id" style="min-width: 12em;">
+                                                {{ props.item.Name }}
+                                            </div>
+                                            <v-text-field
+                                                slot="input"
+                                                label="Name"
+                                                v-model="tmp"
+                                                single-line
+                                                autofocus>
+                                            </v-text-field>
+                                        </v-edit-dialog>
+                                    </td>
+                                    <td>
+                                        <v-edit-dialog lazy large
+                                            @open="tmp = props.item.Email"
+                                            @save="saveUser(props.item, 'Email')">
+                                            <div style="min-width: 12em;">
+                                                {{ props.item.Email }}
+                                            </div>
+                                            <v-text-field
+                                                slot="input"
+                                                label="E-mail"
+                                                v-model="tmp"
+                                                single-line
+                                                autofocus>
+                                            </v-text-field>
+                                        </v-edit-dialog>
+                                    </td>
+                                    <td>
+                                        <v-edit-dialog lazy large
+                                            @open="tmp = props.item.Slug"
+                                            @save="saveUser(props.item, 'Slug')">
+                                            <div style="min-width: 12em;">
+                                                {{ props.item.Slug }}
+                                            </div>
+                                            <v-text-field
+                                                slot="input"
+                                                label="Slug"
+                                                v-model="tmp"
+                                                single-line
+                                                autofocus>
+                                            </v-text-field>
+                                        </v-edit-dialog>
+                                    </td>
+                                    <td>
+                                        <v-edit-dialog lazy large
+                                            @open="initTags(props.item.Tags)"
+                                            @save="saveUser(props.item, 'Tags')">
+                                            <div style="min-width: 12em;">
+                                                {{ props.item.Tags }}
+                                            </div>
+                                            <v-select
+                                                slot="input"
+                                                label="Tags"
+                                                v-model="tagsTmp"
+                                                :items="availableUserTags"
+                                                single-line
+                                                multiple
+                                                bottom>
+                                            </v-select>
+                                        </v-edit-dialog>
+                                    </td>
                                 </tr>
                             </template>
                         </v-data-table>
+
+                        <v-dialog v-model="slugError" max-width="400px" persistent>
+                            <v-card>
+                                <v-card-title class="headline">
+                                    Invalid slug
+                                </v-card-title>
+                                <v-card-text>
+                                    Only letters, numbers, dashes
+                                    (-) and underscores (_)
+                                    are allowed in the slug.
+                                </v-card-text>
+                                <v-card-actions>
+                                    <v-spacer></v-spacer>
+                                    <v-btn color="red darken-1" flat
+                                        @click.native="slugError = false">
+                                        Ok
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
+
+                        <v-dialog v-model="emailError" max-width="400px" persistent>
+                            <v-card>
+                                <v-card-title class="headline">
+                                    Invalid e-mail address
+                                </v-card-title>
+                                <v-card-text>
+                                    Make sure the e-mail address is correct.
+                                </v-card-text>
+                                <v-card-actions>
+                                    <v-spacer></v-spacer>
+                                    <v-btn color="red darken-1" flat
+                                        @click.native="emailError = false">
+                                        Ok
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
                     </v-flex>
                 </v-layout>
             </v-container>
@@ -430,28 +685,31 @@
 
         <template id="tags">
             <v-container fluid grid-list-xl>
-                <v-layout row justify-center>
-                    <v-flex d-flex xs12>
-                        <v-toolbar>
-                            <v-toolbar-title>Tags</v-toolbar-title>
-                            <v-spacer></v-spacer>
-                            <v-text-field
-                                label="Search"
-                                v-model="search"
-                                prepend-icon="search"
-                                hide-details
-                                single-line
-                                autofocus>
-                            </v-text-field>
-                            <v-btn @click="addTag" icon>
-                                <v-icon>add_circle</v-icon>
-                            </v-btn>
-                            <v-btn v-if="selected.length" @click.native="deleteTags" icon>
-                                <v-icon>delete</v-icon>
-                            </v-btn>
-                        </v-toolbar>
-                    </v-flex>
-                </v-layout>
+                <v-toolbar app fixed>
+                    <v-toolbar-title>Tags ({{tags.length}})</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-text-field
+                        label="Search"
+                        v-model="search"
+                        prepend-icon="search"
+                        hide-details
+                        single-line
+                        autofocus>
+                    </v-text-field>
+                    <v-tooltip bottom>
+                        <v-btn @click.native="addTag" slot="activator" icon>
+                            <v-icon>add_circle</v-icon>
+                        </v-btn>
+                        <span>New Tag</span>
+                    </v-tooltip>
+                    <v-tooltip bottom v-if="selected.length">
+                        <v-btn slot="activator" @click.native="deleteTags" icon>
+                            <v-icon>delete</v-icon>
+                        </v-btn>
+                        <span>Delete Tags</span>
+                    </v-tooltip>
+                </v-toolbar>
+
                 <v-layout row justify-center>
                     <v-flex d-flex xs12>
                         <v-data-table
@@ -524,7 +782,7 @@
                             </template>
                         </v-data-table>
 
-                        <v-dialog v-model="slugError" persistent>
+                        <v-dialog v-model="slugError" max-width="400px" persistent>
                             <v-card>
                                 <v-card-title class="headline">
                                     Invalid slug
@@ -536,7 +794,7 @@
                                 </v-card-text>
                                 <v-card-actions>
                                     <v-spacer></v-spacer>
-                                    <v-btn color="green darken-1" flat
+                                    <v-btn color="red darken-1" flat
                                         @click.native="slugError = false">
                                         Ok
                                     </v-btn>
@@ -550,26 +808,33 @@
 
         <template id="subscribers">
             <v-container fluid grid-list-xl>
+                <v-toolbar app fixed>
+                    <v-toolbar-title>Subscribers ({{subscribers.length}})</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-text-field
+                        label="Search"
+                        v-model="search"
+                        prepend-icon="search"
+                        hide-details
+                        single-line
+                        autofocus>
+                    </v-text-field>
+                </v-toolbar>
+
                 <v-layout row justify-center>
                     <v-flex d-flex xs12>
                         <v-data-table
                             :headers="header"
                             :items="subscribers"
+                            item-key="Id"
                             v-model="selected"
                             hide-actions
-                            select-all
+                            :search="search"
                             class="elevation-1">
                             <template slot="items" slot-scope="props">
                                 <tr :active="props.selected">
-                                    <td width="10px">
-                                        <v-checkbox
-                                            primary
-                                            hide-details
-                                            :input-value="props.selected"
-                                            @click="props.selected = !props.selected">
-                                        </v-checkbox>
-                                    </td>
                                     <td>{{ props.item.Email }}</td>
+                                    <td>{{ formattedDate(props.item) }}</td>
                                 </tr>
                             </template>
                         </v-data-table>
@@ -578,12 +843,160 @@
             </v-container>
         </template>
 
+        <template id="media">
+            <v-card flat :style="cssStyle">
+                <v-container v-if="!dialog" fluid grid-list-xl>
+                    <v-toolbar app fixed>
+                        <v-toolbar-title>{{label}} ({{files.length}})</v-toolbar-title>
+                        <v-spacer></v-spacer>
+                        <upload-button :path="path"></upload-button>
+                    </v-toolbar>
+                    <v-layout wrap row>
+                        <v-flex d-flex
+                            :xs2="widthSelected(2)"
+                            :xs3="widthSelected(3)"
+                            v-for="file in files"
+                            :key="file.Id">
+                            <v-card @click.native="click(file)">
+                                <v-card-media
+                                    :src="url(file)" height="150px"
+                                    class="file-details">
+                                    <div>
+                                        <div>Size: {{ humanSize(file) }}</div>
+                                        <div>Resolution: {{ file.Width }}x{{ file.Height }}</div>
+                                        <div>Uploaded on: {{ formatDate(file) }}</div>
+                                    </div>
+                                </v-card-media>
+                            </v-card>
+                        </v-flex>
+                    </v-layout>
+                </v-container>
+
+                <v-card-title v-if="dialog">
+                     <v-toolbar absolute>
+                         <v-toolbar-title>{{label}}</v-toolbar-title>
+                         <v-spacer></v-spacer>
+                         <upload-button :path="path"></upload-button>
+                     </v-toolbar>
+                 </v-card-title>
+                 <v-card-text v-if="dialog">
+                     <v-container fluid grid-list-xl>
+                         <v-layout wrap row>
+                             <v-flex d-flex
+                                 :xs2="widthSelected(2)"
+                                 :xs3="widthSelected(3)"
+                                 v-for="file in files"
+                                 :key="file.Id">
+                                 <v-card @click.native="click(file)">
+                                     <v-card-media
+                                         :src="url(file)"
+                                         height="150px"
+                                         class="file-details">
+                                         <div>
+                                             <div>Size: {{ humanSize(file) }}</div>
+                                             <div>Resolution: {{ file.Width }}x{{ file.Height }}</div>
+                                             <div>Uploaded on: {{ formatDate(file) }}</div>
+                                         </div>
+                                     </v-card-media>
+                                 </v-card>
+                             </v-flex>
+                         </v-layout>
+                     </v-container>
+                 </v-card-text>
+             </v-card>
+         </template>
+
+        <template id="upload-button">
+            <v-btn @click="upload" icon>
+                <v-icon v-if="!uploading">file_upload</v-icon>
+                <v-progress-circular v-if="uploading" indeterminate></v-progress-circular>
+            </v-btn>
+        </template>
+
+        <template id="file-chooser">
+            <div>
+                <v-card flat class="mb-3" @click.native="dialogVisible = true">
+                    <v-card-title v-if="!file">
+                        <v-icon class="px-3">file_upload</v-icon>
+                        <h4>{{label}}</h4>
+                    </v-card-title>
+                    <v-card-media
+                        v-if="file !== null" 
+                        height="200px"
+                        :src="url(file)">
+
+                        <v-tooltip bottom
+                            style="position: absolute; top: 0; right: 0; text-shadow: 0 0 1px black;">
+                            <v-btn
+                                icon slot="activator"
+                                @click="removePicture">
+                                <v-icon>delete</v-icon>
+                            </v-btn>
+                            <span>Remove Image</span>
+                        </v-tooltip>
+                    </v-card-media>
+                </v-card>
+                <v-dialog
+                    max-width="1000px"
+                    v-model="dialogVisible"
+                    scrollable
+                    transition="false">
+                    <media 
+                        path="path"
+                        label="Choose a File"
+                        width="4"
+                        dialog=true
+                        @selected="setPicture">
+                    </media>
+                </v-dialog>
+            </div>
+        </template>
+
         <template id="story-editor">
-            <v-container fluid grid-list-xl fill-height class="editor-container">
+            <v-container fluid grid-list-xl fill-height class="pa-0 editor-container">
+                <v-toolbar app fixed dense>
+                    <v-btn @click="surroundSelection('**', '**')" icon>
+                        <v-icon>format_bold</v-icon>
+                    </v-btn>
+                <v-btn @click="surroundSelection('*', '*')" icon>
+                        <v-icon>format_italic</v-icon>
+                    </v-btn>
+                    <v-btn
+                        @click="cycleHeadings()"
+                        icon>
+                        <v-icon>title</v-icon>
+                    </v-btn>
+                    <span style="width: 32px;"></span>
+                    <v-btn
+                        @click="togglePrefixLines('> ')"
+                        icon>
+                        <v-icon>format_quote</v-icon>
+                    </v-btn>
+                    <v-btn
+                        @click="togglePrefixLines('* ')"
+                        icon>
+                        <v-icon>format_list_bulleted</v-icon>
+                    </v-btn>
+                    <v-btn
+                        @click="toggleEnumerate()"
+                        icon>
+                        <v-icon>format_list_numbered</v-icon>
+                    </v-btn>
+                    <span style="width: 32px;"></span>
+                    <v-btn @click="surroundSelection('[', '](http://)')" icon>
+                        <v-icon>insert_link</v-icon>
+                    </v-btn>
+                    <v-btn @click="insertImage()" icon>
+                        <v-icon>insert_photo</v-icon>
+                    </v-btn>
+                    <v-spacer></v-spacer>
+                    <v-btn color="error" elevation-4 @click="deletePost">Delete</v-btn>
+                    <v-btn color="primary" elevation-4 @click="publish">Publish</v-btn>
+                </v-toolbar>
+
                 <v-layout row fill-height>
-                    <v-flex d-flex xs9 fill-height justify-center class="pa-0">
-                        <v-flex d-flex xs12 style="flex-direction: column; max-width: 1000px;"
-                            class="pt-2 pb-2" fill-height>
+                    <v-flex xs12 fill-height justify-center class="pa-0 text-container">
+                        <v-flex xs12 class="pt-3 pb-5" fill-height>
                             <v-text-field
                                 class="post-title pt-1 pb-1"
                                 label="Title"
@@ -593,114 +1006,99 @@
                                 single-line
                                 multi-line
                                 auto-grow
+                                rows="1"
                                 autofocus>
                             </v-text-field>
-                            <v-text-field
-                                class="post-editor pt-1 pb-1"
-                                label="Type something here..."
-                                v-model="post.Plaintext"
-                                @input="saveOnInput"
-                                full-width
-                                multi-line
-                                single-line
-                                textarea
-                                counter>
-                            </v-text-field>
-                            <v-card style="flex-grow: 0; background: transparent;" flat>
-                                <v-btn-toggle class="mr-3">
-                                    <v-btn>
-                                        <v-icon>format_bold</v-icon>
-                                    </v-btn>
-                                    <v-btn>
-                                        <v-icon>format_italic</v-icon>
-                                    </v-btn>
-                                    <v-btn>
-                                        <v-icon>title</v-icon>
-                                    </v-btn>
-                                </v-btn-toggle>
-                                <v-btn-toggle class="mr-3">
-                                    <v-btn>
-                                        <v-icon>format_quote</v-icon>
-                                    </v-btn>
-                                    <v-btn>
-                                        <v-icon>format_list_bulleted</v-icon>
-                                    </v-btn>
-                                    <v-btn>
-                                        <v-icon>format_list_numbered</v-icon>
-                                    </v-btn>
-                                </v-btn-toggle>
-                                <v-btn-toggle class="mr-3">
-                                    <v-btn>
-                                        <v-icon>insert_link</v-icon>
-                                    </v-btn>
-                                    <v-btn>
-                                        <v-icon>insert_photo</v-icon>
-                                    </v-btn>
-                                </v-btn-toggle>
-                            </v-card>
+                            <div>
+                                <v-text-field
+                                    id="post-text"
+                                    class="post-editor pt-1 pb-1"
+                                    label="Type something here..."
+                                    v-model="post.Plaintext"
+                                    @input="saveOnInput"
+                                    full-width
+                                    multi-line
+                                    single-line
+                                    textarea
+                                    rows="10"
+                                    auto-grow
+                                    counter>
+                                </v-text-field>
+                            </div>
                         </v-flex>
                     </v-flex>
-                    <v-flex d-flex class="pt-2 pb-2">
-                        <v-card flat class="editor-sidebar">
-                            <v-card-text>
-                                <v-select
-                                    label="Tags"
-                                    multiple
-                                    chips
-                                    @input="saveOnInput"
-                                    prepend-icon="label"
-                                    v-model="currentTags"
-                                    :items="allTags"
-                                    item-value="Id"
-                                    item-text="Name">
-                                </v-select>
-                                <v-select
-                                    label="Authors"
-                                    multiple
-                                    @input="saveOnInput"
-                                    prepend-icon="supervisor_account"
-                                    v-model="currentAuthors"
-                                    :items="allUsers"
-                                    item-value="Id"
-                                    item-text="Name">
-                                </v-select>
-                                <div class="pa-2 mt-4">
-                                    <v-checkbox
-                                        label="Featured post"
-                                        v-model="post.Featured"
-                                        @click.native="saveOnInput">
-                                    </v-checkbox>
-                                    <v-checkbox
-                                        label="Is a page"
-                                        v-model="post.Page"
-                                        @click.native="saveOnInput">
-                                    </v-checkbox>
-                                </div>
-                                <v-text-field
-                                    name="input-7-1"
-                                    label="Excerpt"
-                                    v-model="post.Custom_Excerpt"
-                                    @input="saveOnInput"
-                                    auto-grow
-                                    textarea>
-                                </v-text-field>
-                                <v-text-field
-                                    name="input-7-1"
-                                    label="Code Injection"
-                                    v-model="post.Code_Injection"
-                                    @input="saveOnInput"
-                                    auto-grow
-                                    textarea>
-                                </v-text-field>
-                                <p>
-                                    <v-btn color="primary" elevation-4 @click="publish">Publish</v-btn>
-                                    <v-btn color="error" elevation-4>Delete</v-btn>
-                                </p>
-                            </v-card-text>
-                        </v-card>
+                    <v-flex d-flex class="pa-0 editor-sidebar-container">
+                        <div class="mr-3 pt-3 editor-sidebar">
+                            <file-chooser
+                                label="Featured Image"
+                                :initialfile="featuredImage"
+                                @picturechanged="setFeaturedPicture">
+                            </file-chooser>
+                            <v-select
+                                label="Tags"
+                                multiple
+                                chips
+                                @input="saveOnInput"
+                                prepend-icon="label"
+                                v-model="currentTags"
+                                :items="allTags"
+                                item-value="Id"
+                                item-text="Name">
+                            </v-select>
+                            <v-text-field
+                                name="input-7-1"
+                                label="Excerpt"
+                                v-model="post.Custom_Excerpt"
+                                @input="saveOnInput"
+                                auto-grow
+                                rows="4"
+                                textarea>
+                            </v-text-field>
+                            <v-select
+                                label="Authors"
+                                multiple
+                                @input="saveOnInput"
+                                prepend-icon="supervisor_account"
+                                v-model="currentAuthors"
+                                :items="allUsers"
+                                item-value="Id"
+                                item-text="Name">
+                            </v-select>
+                            <v-checkbox
+                                label="Featured post"
+                                v-model="post.Featured"
+                                @click.native="saveOnInput">
+                            </v-checkbox>
+                            <v-checkbox
+                                label="Is a page"
+                                v-model="post.Page"
+                                @click.native="saveOnInput">
+                            </v-checkbox>
+                            <v-text-field
+                                name="input-7-1"
+                                label="Code Injection"
+                                v-model="post.Code_Injection"
+                                @input="saveOnInput"
+                                auto-grow
+                                rows="4"
+                                textarea>
+                            </v-text-field>
+                        </div>
                     </v-flex>
-                </v-layout>
-
+                </v-layout>                
+                <v-dialog
+                    max-width="1000px"
+                    v-model="imageDialogVisible"
+                    scrollable
+                    transition="false">
+                    <media 
+                        path="path"
+                        label="Choose a File"
+                        width="4"
+                        dialog=true
+                        @selected="selectImage">
+                    </media>
+                </v-dialog>
                 <v-snackbar
                     :timeout="snackbarTimeout"
                     bottom right

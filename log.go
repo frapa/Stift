@@ -18,7 +18,7 @@ func init() {
 			panic(err)
 		}
 	} else {
-		logFile, err = os.OpenFile("ublop.log", os.O_APPEND, 0644)
+		logFile, err = os.OpenFile("ublop.log", os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			panic(err)
 		}
@@ -27,11 +27,14 @@ func init() {
 
 func Log(level string, message string) {
 	now := time.Now().Format("02-01-2006 15:04:05")
-	completeMessage := now + " [" + level + "] " + message
+	completeMessage := now + " [" + level + "] " + message + "\n"
 
-	logFile.Write([]byte(completeMessage))
+	_, err := logFile.Write([]byte(completeMessage))
+	if err != nil {
+		println(err.Error())
+	}
 	logFile.Sync()
-	fmt.Println(completeMessage)
+	fmt.Print(completeMessage)
 }
 
 func LogInfo(message string) {

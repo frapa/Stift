@@ -79,12 +79,16 @@ func initFrontend() {
 		return template.HTML(content)
 	}
 	templateFunctions["excerpt"] = func(post PubPost) string {
-		if post.Custom_Excerpt.String == "" {
-			fromFirstParagraph := strings.Split(post.Html.String, "<p>")[1]
-			firstParagraph := strings.Split(fromFirstParagraph, "</p>")[0]
-			return firstParagraph
+		if post.Custom_Excerpt == "" {
+			if len(strings.Split(post.Html, "<p>")) > 1 {
+				fromFirstParagraph := strings.Split(post.Html, "<p>")[1]
+				firstParagraph := strings.Split(fromFirstParagraph, "</p>")[0]
+				return firstParagraph
+			} else {
+				return post.Html
+			}
 		} else {
-			return post.Custom_Excerpt.String
+			return post.Custom_Excerpt
 		}
 	}
 	templateFunctions["format"] = func(date time.Time, format string) string {
@@ -105,29 +109,56 @@ func initFrontend() {
 	wordSplitRegexp = regexp.MustCompile("[^0-9A-Za-z]+")
 }
 
+type PubTag struct {
+	Id          string
+	Name        string
+	Image       string
+	Slug        string
+	Description string
+	LinkId      string
+	Href        string
+}
+
+type PubAuthor struct {
+	Id              string
+	Email           string
+	Name            string
+	Slug            string
+	Location        string
+	Biography       string
+	Profile_Picture string
+	Tags            string
+	Dark_Theme      int64
+	LinkId          string
+	Href            string
+}
+
+type PubPost struct {
+	Id             string
+	Title          string
+	Plaintext      string
+	Slug           string
+	Html           string
+	Visible        int64
+	Page           int64
+	Featured       int64
+	Created_At     *time.Time
+	Updated_At     *time.Time
+	Published_At   *time.Time
+	Code_Injection string
+	Custom_Excerpt string
+	Tags           []PubTag
+	Authors        []PubAuthor
+	Featured_Image string
+	Href           string
+}
+
 type BaseWebsiteData struct {
 	Title              string
 	Subtitle           string
 	SearchEnabled      bool
 	SubscribersEnabled bool
 	Pages              []PubPost
-}
-
-type PubTag struct {
-	TagLink
-	Href string
-}
-
-type PubAuthor struct {
-	UserLink
-	Href string
-}
-
-type PubPost struct {
-	Post
-	Tags    []PubTag
-	Authors []PubAuthor
-	Href    string
 }
 
 type HomeData struct {
@@ -197,9 +228,9 @@ func getAllPostsBySql(sql string) ([]PubPost, error) {
 			return nil, err
 		}
 
-		slug := post.Slug.String
+		slug := post.Slug
 		var href string
-		if post.Page.Int64 == 1 {
+		if post.Page == 1 {
 			href = "/page/" + slug
 		} else {
 			date := post.Published_At
@@ -207,9 +238,20 @@ func getAllPostsBySql(sql string) ([]PubPost, error) {
 		}
 		post.Href = href
 
+		// Featured image
+		if post.Featured_Image != "" {
+			pathSlice, err := getColumnsWhere("Media", "Path", "id=?", post.Featured_Image)
+			if err != nil {
+				return nil, err
+			}
+			if len(pathSlice) > 0 {
+				post.Featured_Image = pathSlice[0]
+			}
+		}
+
 		// Authors
-		if post.Page.Int64 == 0 {
-			authors, err := getAuthors(post.Id.String)
+		if post.Page == 0 {
+			authors, err := getAuthors(post.Id)
 			if err != nil {
 				return nil, err
 			}
@@ -217,11 +259,22 @@ func getAllPostsBySql(sql string) ([]PubPost, error) {
 			post.Authors = make([]PubAuthor, 0)
 			for _, author := range authors {
 				href := "/author/" + author.Slug.String
-				post.Authors = append(post.Authors, PubAuthor{author, href})
+				post.Authors = append(post.Authors, PubAuthor{
+					author.Id.String,
+					author.Email.String,
+					author.Name.String,
+					author.Slug.String,
+					author.Location.String,
+					author.Biography.String,
+					author.Profile_Picture.String,
+					author.Tags.String,
+					author.Dark_Theme.Int64,
+					author.LinkId,
+					href})
 			}
 
 			// Tags
-			tags, err := getTags(post.Id.String)
+			tags, err := getTags(post.Id)
 			if err != nil {
 				return nil, err
 			}
@@ -229,7 +282,14 @@ func getAllPostsBySql(sql string) ([]PubPost, error) {
 			post.Tags = make([]PubTag, 0)
 			for _, tag := range tags {
 				href := "/tag/" + tag.Slug.String
-				post.Tags = append(post.Tags, PubTag{tag, href})
+				post.Tags = append(post.Tags, PubTag{
+					tag.Id.String,
+					tag.Name.String,
+					tag.Image.String,
+					tag.Slug.String,
+					tag.Description.String,
+					tag.LinkId,
+					href})
 			}
 		}
 
@@ -247,6 +307,32 @@ func getAllPosts() ([]PubPost, error) {
 			AND "published_at" IS NOT NULL
 			AND "published_at" < strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 		ORDER BY "published_at" DESC;`
+
+	posts, err := getAllPostsBySql(sql)
+	return posts, err
+}
+
+func getAllPostsLimit(limit int) ([]PubPost, error) {
+	sql := `
+		SELECT * FROM "Posts"
+		WHERE "visible"=1
+			AND "page" != 1
+			AND "published_at" IS NOT NULL
+			AND "published_at" < strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+		ORDER BY "published_at" DESC LIMIT ` + strconv.Itoa(limit) + `;`
+
+	posts, err := getAllPostsBySql(sql)
+	return posts, err
+}
+
+func getAllPostsOffsetLimit(offset int, limit int) ([]PubPost, error) {
+	sql := `
+		SELECT * FROM "Posts"
+		WHERE "visible"=1
+			AND "page" != 1
+			AND "published_at" IS NOT NULL
+			AND "published_at" < strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+		ORDER BY "published_at" DESC LIMIT ` + strconv.Itoa(limit) + `;`
 
 	posts, err := getAllPostsBySql(sql)
 	return posts, err
@@ -298,11 +384,11 @@ func Home(res http.ResponseWriter, req *http.Request) {
 
 type TagData struct {
 	BaseWebsiteData
-	Tag
-	Posts []Post
+	PubTag
+	Posts []PubPost
 }
 
-func getPostsFromTag(tagId string) ([]Post, error) {
+func getPostsFromTag(tagId string) ([]PubPost, error) {
 	postsSql := `
 		SELECT Posts.* FROM Post2Tags
 		JOIN Posts ON Post2Tags.Post=Posts.Id
@@ -318,14 +404,25 @@ func getPostsFromTag(tagId string) ([]Post, error) {
 	}
 	defer rows.Close()
 
-	posts := make([]Post, 0)
+	posts := make([]PubPost, 0)
 
 	for rows.Next() {
-		rowData := new(Post)
+		rowData := new(PubPost)
 		err := rows.StructScan(&rowData)
 		if err != nil {
 			return nil, err
 		}
+
+		slug := rowData.Slug
+		var href string
+		if rowData.Page == 1 {
+			href = "/page/" + slug
+		} else {
+			date := rowData.Published_At
+			href = date.Format("/2006/01/02/") + slug
+		}
+		rowData.Href = href
+
 		posts = append(posts, *rowData)
 	}
 
@@ -362,7 +459,7 @@ func TagPage(res http.ResponseWriter, req *http.Request) {
 		}
 
 		// Extract posts with this tag
-		data.Posts, err = getPostsFromTag(data.Id.String)
+		data.Posts, err = getPostsFromTag(data.Id)
 		if err != nil {
 			LogError(err.Error())
 			http.Error(res, http.StatusText(500), http.StatusInternalServerError)
@@ -378,11 +475,11 @@ func TagPage(res http.ResponseWriter, req *http.Request) {
 
 type AuthorData struct {
 	BaseWebsiteData
-	User
-	Posts []Post
+	PubAuthor
+	Posts []PubPost
 }
 
-func getPostsFromAuthor(userId string) ([]Post, error) {
+func getPostsFromAuthor(userId string) ([]PubPost, error) {
 	postsSql := `
 		SELECT Posts.* FROM Post2Users
 		JOIN Posts ON Post2Users.Post=Posts.Id
@@ -399,14 +496,25 @@ func getPostsFromAuthor(userId string) ([]Post, error) {
 	}
 	defer rows.Close()
 
-	posts := make([]Post, 0)
+	posts := make([]PubPost, 0)
 
 	for rows.Next() {
-		rowData := new(Post)
+		rowData := new(PubPost)
 		err := rows.StructScan(&rowData)
 		if err != nil {
 			return nil, err
 		}
+
+		slug := rowData.Slug
+		var href string
+		if rowData.Page == 1 {
+			href = "/page/" + slug
+		} else {
+			date := rowData.Published_At
+			href = date.Format("/2006/01/02/") + slug
+		}
+		rowData.Href = href
+
 		posts = append(posts, *rowData)
 	}
 
@@ -426,7 +534,10 @@ func AuthorPage(res http.ResponseWriter, req *http.Request) {
 	// Extract tag database
 	sql := `SELECT * FROM "Users" WHERE "slug"=? LIMIT 1;`
 
-	rows, err := db.Queryx(sql, slug)
+	// Unsafe is necessary because it allows reading into the struct
+	// even if password and salt is missing. For security reasons these
+	// fields should not be available to the theme.
+	rows, err := db.Unsafe().Queryx(sql, slug)
 	if err != nil {
 		LogError(err.Error())
 		http.Error(res, http.StatusText(500), http.StatusInternalServerError)
@@ -443,7 +554,7 @@ func AuthorPage(res http.ResponseWriter, req *http.Request) {
 		}
 
 		// Extract posts with this tag
-		data.Posts, err = getPostsFromAuthor(data.Id.String)
+		data.Posts, err = getPostsFromAuthor(data.Id)
 		if err != nil {
 			LogError(err.Error())
 			http.Error(res, http.StatusText(500), http.StatusInternalServerError)
@@ -485,7 +596,7 @@ func getFullPostsBySlug(slug string) (PubPost, error) {
 	}
 
 	var href string
-	if post.Page.Int64 == 1 {
+	if post.Page == 1 {
 		href = "/page/" + slug
 	} else {
 		date := post.Published_At
@@ -494,8 +605,8 @@ func getFullPostsBySlug(slug string) (PubPost, error) {
 	post.Href = href
 
 	// Authors
-	if post.Page.Int64 == 0 {
-		authors, err := getAuthors(post.Id.String)
+	if post.Page == 0 {
+		authors, err := getAuthors(post.Id)
 		if err != nil {
 			return PubPost{}, err
 		}
@@ -503,11 +614,22 @@ func getFullPostsBySlug(slug string) (PubPost, error) {
 		post.Authors = make([]PubAuthor, 0)
 		for _, author := range authors {
 			href := "/author/" + author.Slug.String
-			post.Authors = append(post.Authors, PubAuthor{author, href})
+			post.Authors = append(post.Authors, PubAuthor{
+				author.Id.String,
+				author.Email.String,
+				author.Name.String,
+				author.Slug.String,
+				author.Location.String,
+				author.Biography.String,
+				author.Profile_Picture.String,
+				author.Tags.String,
+				author.Dark_Theme.Int64,
+				author.LinkId,
+				href})
 		}
 
 		// Tags
-		tags, err := getTags(post.Id.String)
+		tags, err := getTags(post.Id)
 		if err != nil {
 			return PubPost{}, err
 		}
@@ -515,7 +637,14 @@ func getFullPostsBySlug(slug string) (PubPost, error) {
 		post.Tags = make([]PubTag, 0)
 		for _, tag := range tags {
 			href := "/tag/" + tag.Slug.String
-			post.Tags = append(post.Tags, PubTag{tag, href})
+			post.Tags = append(post.Tags, PubTag{
+				tag.Id.String,
+				tag.Name.String,
+				tag.Image.String,
+				tag.Slug.String,
+				tag.Description.String,
+				tag.LinkId,
+				href})
 		}
 	}
 
@@ -540,7 +669,7 @@ func PostPage(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if data.Post.Page.Int64 == 1 {
+	if data.Post.Page == 1 {
 		http.Error(res, http.StatusText(404), http.StatusNotFound)
 		return
 	}
@@ -566,7 +695,7 @@ func PagePage(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if data.Post.Page.Int64 == 0 {
+	if data.Post.Page == 0 {
 		http.Error(res, http.StatusText(404), http.StatusNotFound)
 		return
 	}
@@ -706,9 +835,9 @@ func Search(res http.ResponseWriter, req *http.Request) {
 	tockenizedPosts := make(map[int]map[int][]string)
 	for i, post := range posts {
 		tockenizedPosts[i] = make(map[int][]string)
-		tockenizedPosts[i][TITLE] = wordSplitRegexp.Split(strings.ToLower(post.Title.String), -1)
-		tockenizedPosts[i][HTML] = wordSplitRegexp.Split(strings.ToLower(post.Html.String), -1)
-		tockenizedPosts[i][EXCERPT] = wordSplitRegexp.Split(strings.ToLower(post.Custom_Excerpt.String), -1)
+		tockenizedPosts[i][TITLE] = wordSplitRegexp.Split(strings.ToLower(post.Title), -1)
+		tockenizedPosts[i][HTML] = wordSplitRegexp.Split(strings.ToLower(post.Html), -1)
+		tockenizedPosts[i][EXCERPT] = wordSplitRegexp.Split(strings.ToLower(post.Custom_Excerpt), -1)
 	}
 
 	totDoc := len(posts)
@@ -759,12 +888,12 @@ func Search(res http.ResponseWriter, req *http.Request) {
 	// highlight results
 	for i := range data.Results {
 		for _, term := range terms {
-			data.Results[i].Post.Title.String = HighlightTerm(
-				data.Results[i].Post.Title.String, term)
-			data.Results[i].Post.Html.String = HighlightTerm(
-				data.Results[i].Post.Html.String, term)
-			data.Results[i].Post.Custom_Excerpt.String = HighlightTerm(
-				data.Results[i].Post.Custom_Excerpt.String, term)
+			data.Results[i].Post.Title = HighlightTerm(
+				data.Results[i].Post.Title, term)
+			data.Results[i].Post.Html = HighlightTerm(
+				data.Results[i].Post.Html, term)
+			data.Results[i].Post.Custom_Excerpt = HighlightTerm(
+				data.Results[i].Post.Custom_Excerpt, term)
 		}
 	}
 

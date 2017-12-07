@@ -6,16 +6,65 @@
 
         <link rel="stylesheet"
             href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+        <link rel="stylesheet" href="/themes/impact/css/impact.css">
     </head>
     <body>
-        <nav>
-            <a href="/"><h1>{{ echo .Title }}</h1></a>
-            {{ range .Pages }}
-                <a href="{{ echo .Href }}">{{ echo .Title }}</a>
-            {{ end }}
-        </nav>
-        <content>
-            {{ template "Content" . }}
-        </content>
+        <header class="site {{ template "SubTitle" . }}">
+            <div class="centering">
+                <nav>
+                    <span class="logo">
+                        <a href="/">{{ .Title }}</a>
+                        <span>{{ .Subtitle }}</span>
+                    </span>
+                    <span class="spacer"></span>
+                    <span class="page-nav">
+                        <a href="/">Home</a>
+                    </span>
+                    {{ range .Pages }}
+                    <span class="page-nav">
+                        <a href="{{ echo .Href }}">{{ .Title }}</a>
+                    </span>
+                    {{ end }}
+                    {{ if .SearchEnabled }}
+                        <span class="search-box">
+                            <img src="/themes/impact/media/search.svg" />
+                            <form action="/search" method="GET">
+                                <input type="text" name="terms" placeholder="Search" />
+                            </form>
+                        </span>
+                    {{ end }}
+                </nav>
+
+                <h1><a href="/">{{ .Title }}</a></h1>
+                <h2><a href="/">{{ .Subtitle }}</a></h2>
+            </div>
+        </header>
+        <main>
+            <content class="centering-small">
+                {{ template "Content" . }}
+            </content>
+        </main>
+        <footer class="site">
+            <div class="centering">
+                <span>
+                    Powered by AusDruck
+                </span>
+                <span>
+                    <a href="/rss"><img class="social" src="/themes/impact/media/rss.svg"/></a>
+                </span>
+                {{ if .SubscribersEnabled }}
+                    <span class="newsletter">
+                        <p>
+                            <img class="social" src="/themes/impact/media/mail.svg" />
+                            Be the first to get new articles!
+                        </p>
+                        <form>
+                            <input type="email" name="email" placeholder="your.email@example.com" />
+                            <input type="submit" value="Sign Up" />
+                        </form>
+                    </span>
+                {{ end }}
+            </div>
+        </footer>
     </body>
 </html>

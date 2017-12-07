@@ -3,16 +3,60 @@
     <head>
         <meta charset="utf-8">
         <title>Ublop - Login</title>
+        <style>
+            html {
+                background: rgb(25, 118, 210);
+                height: 100%;
+            }
+
+            body {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            form {
+                min-width: 300px;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            input {
+                font-size: 0.8rem;
+                border: 0;
+                border-radius: 2px;
+                padding: 0.5rem 0.5rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+            }
+
+            input[type="submit"] {
+                font-weight: bold;
+                background-color: rgb(211, 211, 211);
+            }
+            
+            input[type="submit"]:hover {
+                background-color: rgb(231, 231, 231);
+            }
+    
+            p {
+                font-family: sans;
+                font-size: 0.8rem;
+                color: white;
+                display: none;
+                text-shadow: 0 0 1px rgba(0, 0, 0, 0.37); 
+            }
+        </style>
     </head>
     <body>
         <form action="/admin/login" method="POST">
-            <div>
-                <div>
-                    <div><input type="text" name="email"/></div>
-                    <div><input type="password" name="password"/></div>
-                </div>
-                <div><input type="submit" value="Login" /></div>
-            </div>
+            <p>Wrong e-mail or password</p>
+            <input type="text" placeholder="youremail@example.com" name="email"/>
+            <input type="password" placeholder="Password" name="password"/>
+            <input type="submit" value="Log in" />
         </form>
     </body>
 </html>

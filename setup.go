@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha1"
+	"errors"
 	"net/http"
 	"os"
 	"os/exec"
@@ -42,6 +43,7 @@ func FinalSetup(res http.ResponseWriter, req *http.Request) {
 
 	// Insert default data
 	createSetting("BlogTitle", title)
+	//createSetting("BlogUrl", title)
 	createSetting("BlogSubtitle", subtitle)
 
 	thId := xid.New().String()
@@ -50,6 +52,8 @@ func FinalSetup(res http.ResponseWriter, req *http.Request) {
 
 	createSetting("SearchEnabled", "1")
 	createSetting("SubscribersEnabled", "1")
+	createSetting("MaxResolution", "1920")
+	createSetting("JpegQuality", "75")
 
 	// Remove setup file so that next time the server starts in production mode
 	os.Remove("setup") // ignore errors
@@ -66,6 +70,28 @@ func FinalSetup(res http.ResponseWriter, req *http.Request) {
 	}()
 }
 
+func SetUserPassword(email string, password string) error {
+	userIds, err := getColumnsWhere("Users", "Id", "email=?", email)
+	if err != nil {
+		return err
+	}
+	if len(userIds) == 0 {
+		return errors.New("No user with e-mail '" + email + "' was found.")
+	}
+	userId := userIds[0]
+	println(userId)
+
+	salt := xid.New().String()
+	hash := pbkdf2.Key([]byte(password), []byte(salt), 4096, 32, sha1.New)
+
+	err = updateWhere("Users", "password, salt", "id=?", hash, salt, userId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func CreateUser(email string, password string, name string) {
 	id := xid.New().String()
 	salt := xid.New().String()
@@ -73,7 +99,7 @@ func CreateUser(email string, password string, name string) {
 	slug := strings.Replace(strings.ToLower(name), " ", "-", 100)
 
 	err := insertInto("Users", "id, email, name, slug, password, salt, tags",
-		id, email, name, slug, hash, salt, "administrator")
+		id, email, name, slug, hash, salt, "administrator, author")
 	if err != nil {
 		LogError(err.Error())
 	}

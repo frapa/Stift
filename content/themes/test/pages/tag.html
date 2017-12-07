@@ -1,0 +1,15 @@
+{{/* extends "layout.html" */}}
+
+{{ define "SubTitle" }} Tag: {{ echo .Name }} {{ end }}
+
+{{ define "Content" }}
+
+    <h2>{{ echo .Name }}</h2>
+    <p>
+        {{ echo .Description }}
+    </p>
+    {{ range .Posts }}
+        {{ echo .Title }}
+    {{ end }}
+
+{{ end }}

@@ -31,6 +31,15 @@ func init() {
 		router.HandleFunc("/search", Search).Queries("terms", "{terms}")
 		router.HandleFunc("/search", Search).Queries("terms", "{terms}").Queries("page", "{page}")
 		router.HandleFunc("/page/{slug}", PagePage)
+		router.HandleFunc("/rss", Rss)
+
+		media := filepath.Join("./media")
+		router.PathPrefix("/media/").Handler(
+			http.StripPrefix("/media/", http.FileServer(http.Dir(media))))
+
+		themes := filepath.Join("./content/themes")
+		router.PathPrefix("/themes/").Handler(
+			http.StripPrefix("/themes/", http.FileServer(http.Dir(themes))))
 
 		// Admin pages
 		router.HandleFunc("/admin", Admin)
@@ -40,12 +49,17 @@ func init() {
 		jsStatic := filepath.Join("content", "admin", "js")
 		cssStatic := filepath.Join("content", "admin", "css")
 		fontsStatic := filepath.Join("content", "admin", "fonts")
+		imagesStatic := filepath.Join("content", "admin", "images")
 		router.PathPrefix("/admin/js/").Handler(
 			http.StripPrefix("/admin/js/", http.FileServer(http.Dir(jsStatic))))
 		router.PathPrefix("/admin/css/").Handler(
 			http.StripPrefix("/admin/css/", http.FileServer(http.Dir(cssStatic))))
 		router.PathPrefix("/admin/fonts/").Handler(
 			http.StripPrefix("/admin/fonts/", http.FileServer(http.Dir(fontsStatic))))
+		router.PathPrefix("/admin/images/").Handler(
+			http.StripPrefix("/admin/images/", http.FileServer(http.Dir(imagesStatic))))
+
+		router.HandleFunc("/admin/{page}/{id}", Admin)
 	}
 
 	http.Handle("/", router)
@@ -53,7 +67,7 @@ func init() {
 	server = &http.Server{
 		Addr:              ":8080",
 		Handler:           context.ClearHandler(http.DefaultServeMux),
-		ReadTimeout:       15 * time.Second,
+		ReadTimeout:       10 * time.Minute, // this needs to be big for file uploads
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      15 * time.Second,
 		MaxHeaderBytes:    1024 * 1024, // 1 MB

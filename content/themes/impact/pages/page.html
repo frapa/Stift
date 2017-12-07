@@ -6,7 +6,7 @@
 
     <article>
         <header>
-            <a href="{{ echo .Post.Href }}"><h2>{{ echo .Post.Title }}</h2></a>
+            <h2><a href="{{ .Post.Href }}">{{ .Post.Title }}</a></h2>
         </header>
         <content>
             {{ plain .Post.Html }}

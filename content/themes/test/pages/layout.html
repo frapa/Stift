@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>{{ .Title }} - {{ template "SubTitle" . }}</title>
+
+        <link rel="stylesheet"
+            href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+        <link rel="stylesheet"
+            href="/themes/test/css/style.css">
+    </head>
+    <body>
+        <nav>
+            <a href="/"><h1>{{ echo .Title }}</h1></a>
+            {{ range .Pages }}
+                <a href="{{ echo .Href }}">{{ echo .Title }}</a>
+            {{ end }}
+        </nav>
+        <content>
+            {{ template "Content" . }}
+        </content>
+    </body>
+</html>

@@ -1,0 +1,16 @@
+{{/* extends "layout.html" */}}
+
+{{ define "SubTitle" }} post {{ end }}
+
+{{ define "Content" }}
+
+    <article>
+        <header>
+            <a href="{{ echo .Post.Href }}"><h2>{{ echo .Post.Title }}</h2></a>
+        </header>
+        <content>
+            {{ plain .Post.Html }}
+        <content>
+    </article>
+
+{{ end }}

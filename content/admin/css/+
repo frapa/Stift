@@ -1,0 +1,136 @@
+div.post-title {
+    flex-grow: 0;
+}
+
+div.post-title textarea {
+    font-size: 300%;
+    resize: none;
+}
+
+div.post-title label {
+    top: 20px;
+    bottom: 10px;
+    height: auto;
+    font-size: 300%;
+}
+
+/*.editor-container .card__text {
+    height: 100%;
+    overflow-y: auto;
+}*/
+
+div.editor-container div.editor-sidebar-container {
+    position: absolute;
+    top: 0;
+    right: -50px;
+    height: 100vh;
+    overflow-y: hidden;
+}
+
+div.editor-container div.editor-sidebar {
+    background: transparent;
+    overflow-y: auto;
+    padding-right: 50px;
+    width: 20vw;
+}
+
+div.editor-container div.text-container > div.flex {
+    flex-direction: column;
+    max-width: 1000px;
+    margin-right: 20vw;
+}
+
+.post-editor {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.post-editor .input-group__details,
+.post-title .input-group__details {
+    display: none;
+}
+
+.post-editor textarea {
+    resize: none;
+    font-family: 'Roboto Mono', monospace;
+}
+
+#saved-notification {
+    display: none;
+}
+
+.story-list-container {
+    padding: 2em;
+    display: flex;
+    justify-content: center;
+}
+
+.story-list-content {
+    max-width: 80em;
+    flex-grow: 1;
+}
+
+.settings-container {
+    display: flex;
+    justify-content: center;
+}
+
+.settings-content {
+    max-width: 40em;
+    flex-grow: 1;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation-name: spin;
+    animation-duration: 1000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.25s;
+}
+
+.fade-enter, .fade-leave-to {
+    opacity: 0;
+}
+
+div.data-table-ellipsis {
+    width: 25em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.datatable__progress {
+    display: none;
+}
+
+.application--wrap,
+main {
+    height: 100%;
+}
+
+.file-details > div.card__media__content {
+    display: block;
+}
+
+.file-details > div.card__media__content > div {
+    padding: 1em;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+}
+
+.file-details:hover > div.card__media__content > div {
+    display: block;
+    font-weight: bold;
+    text-shadow: 0 0 4px black;
+}

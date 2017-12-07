@@ -1,48 +1,60 @@
 {{/* extends "layout.html" */}}
 
-{{ define "SubTitle" }} Search: {{ echo .SearchTerms }} {{ end }}
+{{ define "SubTitle" }} Search: {{ .SearchTerms }} {{ end }}
 
 {{ define "Content" }}
     {{ $page := .Page }}
 
-    A search for "{{ echo .SearchTerms }}" returned {{ .ResultNumber }} results
-    {{ range $i, $result := .Results }}
-        {{ if paginate $i 10 $page }}
-            <article>
-                <header>
-                    <a href="{{ echo .Post.Href }}">
-                        <h2 style="font-weight: normal;">{{ .Post.Title | plain }}</h2>
-                    </a>
-                    <span>Score: {{ printf "%.2f" .Score }}</span>
-                    <div>
-                        <span>
+    <p class="intro">The search for "{{ .SearchTerms }}" returned {{ .ResultNumber }} results:</p>
+
+    <section>
+        {{ range $i, $result := .Results }}
+            {{ if paginate $i 10 $page }}
+                <article>
+                    {{ if .Post.Featured_Image }}
+                        <img src="/media/{{ .Post.Featured_Image }}" />
+                    {{ end }}
+                    <header>
+                        <span class="tags">
                             {{ range .Post.Tags }}
                                 <a href="{{ echo .Href }}">{{ echo .Name }}</a>
                             {{ end }}
                         </span>
-                        <span>
+                        <h2>
+                            <a href="{{ .Post.Href }}">{{ .Post.Title | plain }}</a>
+                        </h2>
+                    </header>
+                    <summary>
+                        {{ excerpt .Post | plain }}
+                    </summary>
+                    <footer>
+                        <span class="author">
+                            By
                             {{ range .Post.Authors }}
                                 <a href="{{ echo .Href }}">{{ echo .Name }}</a>
                             {{ end }}
                         </span>
-                        <span>
+                        <time>
                             {{ format .Post.Published_At "2 Jan 2006 - 15:04" }}
-                        </span>
-                    </div>
-                </header>
-                <content>
-                    {{ excerpt .Post | plain }}
-                <content>
-            </article>
+                        </time>
+                        <span class="spacer"></span>
+                        <span>Score: {{ printf "%.2f" .Score }}</span>
+                    </footer>
+                </article>
+            {{ end }}
         {{ end }}
-    {{ end }}
+    </section>
+    
+    <nav>
+        {{ if gt .Page 0 }}
+            <a href="{{ prev_href .Page }}&terms={{ echo .SearchTerms }}">Prev</a>
+        {{ end }}
 
-    {{ if gt .Page 0 }}
-        <a href="{{ prev_href .Page }}&terms={{ echo .SearchTerms }}">Prev</a>
-    {{ end }}
+        <span class="spacer"></span>
 
-    {{ if next_exist .Results 19 .Page }}
-        <a href="{{ next_href .Page }}&terms={{ echo .SearchTerms }}">Next</a>
-    {{ end }}
+        {{ if next_exist .Results 10 .Page }}
+            <a href="{{ next_href .Page }}&terms={{ echo .SearchTerms }}">Next</a>
+        {{ end }}
+    </nav>
 
 {{ end }}

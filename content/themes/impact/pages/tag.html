@@ -1,15 +1,20 @@
 {{/* extends "layout.html" */}}
 
-{{ define "SubTitle" }} Tag: {{ echo .Name }} {{ end }}
+{{ define "SubTitle" }} Tag: {{ .Name }} {{ end }}
 
 {{ define "Content" }}
+    <h2>Tag: {{ .Name }}</h2>
+    {{ if .Description }}
+        <p>
+            {{ .Description }}
+        </p>
+    {{ end }}
 
-    <h2>{{ echo .Name }}</h2>
-    <p>
-        {{ echo .Description }}
-    </p>
+    <h3>Articles with this tag ({{ len .Posts }})</h3>
     {{ range .Posts }}
-        {{ echo .Title }}
+        <article>
+            <a href="{{ .Href }}">{{ .Title }}</a>
+        </article>
     {{ end }}
 
 {{ end }}
