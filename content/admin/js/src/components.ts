@@ -10,8 +10,13 @@ Vue.component('stories-dashboard', async function (resolve, reject) {
         template: '#stories-dashboard',
         data: function () {
             setTimeout(() => window.scrollTo(0,0), 0);
+
+            var sortedPosts = posts.getData().sort((a, b) => {
+                return a.Created_At < b.Created_At;
+            });
+
             return {
-                posts: posts.getData(),
+                posts: sortedPosts,
                 filter: 'all',
             };
         },

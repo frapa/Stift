@@ -49,8 +49,11 @@ Vue.component('stories-dashboard', function (resolve, reject) {
                         template: '#stories-dashboard',
                         data: function () {
                             setTimeout(function () { return window.scrollTo(0, 0); }, 0);
+                            var sortedPosts = posts.getData().sort(function (a, b) {
+                                return a.Created_At < b.Created_At;
+                            });
                             return {
-                                posts: posts.getData(),
+                                posts: sortedPosts,
                                 filter: 'all',
                             };
                         },
