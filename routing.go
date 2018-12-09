@@ -64,8 +64,13 @@ func init() {
 
 	http.Handle("/", router)
 
+	port := os.Getenv("STIFT_PORT");
+	if len(port) == 0 {
+		port = "8080";
+	}
+	
 	server = &http.Server{
-		Addr:              ":8080",
+		Addr:              ":" + port,
 		Handler:           context.ClearHandler(http.DefaultServeMux),
 		ReadTimeout:       10 * time.Minute, // this needs to be big for file uploads
 		ReadHeaderTimeout: 5 * time.Second,

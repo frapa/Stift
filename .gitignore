@@ -1,3 +1,5 @@
 ublop
 *.log
 *.db
+data.sqlite3
+Stift

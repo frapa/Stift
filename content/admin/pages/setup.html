@@ -2,24 +2,62 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Ublop - Configuration</title>
+        <title>Stift - Configuration</title>
+        <style>
+            * { box-sizing: border-box; }
+            body { font-family: sans-serif; border-top: 2rem solid #2ebdbd; margin: 0; font-size: 14pt; background: #eff1e4; }
+            label { display: block; margin-top: 1rem; font-size: 12pt; color: rgba(0,0,0,0.75); }
+            main { margin: 2rem auto; max-width: 24rem; }
+            h1, h6 { position: relative; }
+            h1::after, h6::after { content: ''; position: absolute; left: 0; bottom: 0; width: 8rem; border-bottom: 0.25rem solid #2ebdbd; }
+            h6 { font-size: 14pt; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem;; }
+            input { width: 100%; border: 1px solid rgba(0,0,0,0.25); font-size: 14pt; padding: 0.5rem; }
+            input:focus {border-color: #2ebdbd; }
+            input[type="submit"] { margin: 2rem; padding: 1rem 2rem; width: auto; background: #2ebdbd; color: white; }
+            input[type="submit"]:hover { background: #537c8e ; }
+        </style>
     </head>
     <body>
-        <h1>Welcome to Ublop!</h1>
-        <p>Before starting to use Ublop, you need to configure a few things.</p>
-        <form action="/setup" method="POST">
-            <div>
-                <div><input type="text" name="email"/></div>
-                <div><input type="password" name="password"/></div>
-                <div><input type="password" name="repeat_password"/></div>
-            </div><div>
-                <div><input type="text" name="name"/></div>
-            </div>
-            <div>
-                <div><input type="text" name="title"/></div>
-                <div><input type="text" name="subtitle"/></div>
-            </div>
-            <div><input type="submit" value="Start using Ublop" /></div>
-        </form>
+        <main>
+            <h1>Welcome to Stift!</h1>
+            <p>Before starting to use Stift, you need to configure a few things.</p>
+            <form action="/setup" method="POST">
+                <h6>Login</h6>
+                <div>
+                    <div>
+                        <label>E-mail:</label>
+                        <input type="text" name="email"/>
+                    </div>
+                    <div>
+                        <label>Password:</label>
+                        <input type="password" name="password"/>
+                    </div>
+                    <div>
+                        <label>Repeat password:</label>
+                        <input type="password" name="repeat_password"/>
+                    </div>
+                </div>
+                <h6>Blog</h6>
+                <div>
+                    <div>
+                        <label>Name:</label>
+                        <input type="text" name="name"/>
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <label>Title:</label>
+                        <input type="text" name="title"/>
+                    </div>
+                    <div>
+                        <label>Subtitle:</label>
+                        <input type="text" name="subtitle"/>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <input type="submit" value="Start using Stift" />
+                </div>
+            </form>
+        </main>
     </body>
 </html>
